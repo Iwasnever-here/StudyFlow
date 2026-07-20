@@ -1,116 +1,120 @@
+@import "tailwindcss";
+
 :root {
   color-scheme: light;
 
-  /* Brand */
   --color-primary: #26371f;
   --color-primary-hover: #1d2b18;
   --color-secondary: #7a8357;
 
-  /* Backgrounds */
   --bg-page: #f4f0df;
   --bg-card: #fff8dd;
   --bg-input: #fffdf0;
 
-  /* Text */
   --text-primary: #26371f;
   --text-secondary: #3d4d2f;
   --text-muted: #6f6848;
   --text-placeholder: #9b9270;
   --text-light: #fff8dd;
 
-  /* Borders */
   --border: #c9b98a;
   --border-accent: #b7a56f;
 
-  /* Error */
   --error-bg: #f8e1dc;
   --error-border: #d99a8b;
   --error-text: #8a3b2d;
 
-  /* Disabled */
   --disabled: #9ca58a;
-
-  /* Grid */
   --grid: #415c3214;
 }
 
-/* Manual dark mode */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* Brand */
   --color-primary: #b7d49d;
   --color-primary-hover: #c7e6ac;
   --color-secondary: #8fa97b;
 
-  /* Backgrounds */
   --bg-page: #101410;
   --bg-card: #1a2118;
   --bg-input: #222b20;
 
-  /* Text */
   --text-primary: #f5f4ea;
   --text-secondary: #d8d5c5;
   --text-muted: #a5aa97;
   --text-placeholder: #7f8575;
   --text-light: #101410;
 
-  /* Borders */
   --border: #384233;
   --border-accent: #5d7253;
 
-  /* Error */
   --error-bg: #402521;
   --error-border: #8f5147;
   --error-text: #f4b7ad;
 
-  /* Disabled */
   --disabled: #4d5748;
-
-  /* Grid */
   --grid: #ffffff10;
 }
 
-/* Manual light mode */
 :root[data-theme='light'] {
   color-scheme: light;
 }
 
-/* Follow laptop settings when no manual theme is selected */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
 
-    /* Brand */
     --color-primary: #b7d49d;
     --color-primary-hover: #c7e6ac;
     --color-secondary: #8fa97b;
 
-    /* Backgrounds */
     --bg-page: #101410;
     --bg-card: #1a2118;
     --bg-input: #222b20;
 
-    /* Text */
     --text-primary: #f5f4ea;
     --text-secondary: #d8d5c5;
     --text-muted: #a5aa97;
     --text-placeholder: #7f8575;
     --text-light: #101410;
 
-    /* Borders */
     --border: #384233;
     --border-accent: #5d7253;
 
-    /* Error */
     --error-bg: #402521;
     --error-border: #8f5147;
     --error-text: #f4b7ad;
 
-    /* Disabled */
     --disabled: #4d5748;
-
-    /* Grid */
     --grid: #ffffff10;
   }
+}
+
+html {
+  background-color: var(--bg-page);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+button,
+a,
+input,
+textarea,
+select,
+aside,
+header,
+main {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
