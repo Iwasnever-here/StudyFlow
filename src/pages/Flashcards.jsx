@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import HeaderSection from '../components/pages/HeaderSection'
 import FormModal from '../components/FormModal'
 import { supabase } from '../lib/supabaseClient'
-
+import { flashcardSetFields } from '../config/flashcardSetFields'
 const initialFlashcardSetValues = {
   class_id: '',
   title: '',
@@ -68,30 +68,6 @@ const Flashcards = () => {
     fetchPageData()
   }, [])
 
-  const flashcardSetFields = useMemo(
-    () => [
-      {
-        name: 'class_id',
-        label: 'Class',
-        type: 'select',
-        required: true,
-        options: classes.map((classItem) => ({
-          label: classItem.code
-            ? `${classItem.code} — ${classItem.name}`
-            : classItem.name,
-          value: classItem.id,
-        })),
-      },
-      {
-        name: 'title',
-        label: 'Set Title',
-        type: 'text',
-        placeholder: 'Example: Week 1 Key Terms',
-        required: true,
-      },
-    ],
-    [classes]
-  )
 
   const createFlashcardSet = async (formData) => {
     const title = formData.title.trim()

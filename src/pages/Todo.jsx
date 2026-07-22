@@ -2,38 +2,11 @@ import { useEffect, useState } from 'react'
 import HeaderSection from '../components/pages/HeaderSection'
 import FormModal from '../components/FormModal'
 import { supabase } from '../lib/supabaseClient'
-
+import { todoFields } from '../config/todoFields'
 const Todo = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [todos, setTodos] = useState([])
   const [pageError, setPageError] = useState(null)
-
-  const todoFields = [
-    {
-      name: 'title',
-      label: 'Task',
-      type: 'text',
-      placeholder: 'What do you need to do?',
-      required: true,
-    },
-    {
-      name: 'priority',
-      label: 'Priority',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Low', value: 'low' },
-        { label: 'Medium', value: 'medium' },
-        { label: 'High', value: 'high' },
-      ],
-    },
-    {
-      name: 'class_id',
-      label: 'Class ID',
-      type: 'text',
-      placeholder: 'Optional class ID',
-    },
-  ]
 
   const fetchTodos = async () => {
     setPageError(null)
