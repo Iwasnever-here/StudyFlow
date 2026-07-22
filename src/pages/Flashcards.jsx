@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import HeaderSection from '../components/pages/HeaderSection'
 import FormModal from '../components/FormModal'
 import { supabase } from '../lib/supabaseClient'
-import { flashcardSetFields } from '../config/flashcardSetFields'
-const initialFlashcardSetValues = {
-  class_id: '',
-  title: '',
-}
+import {
+  getFlashcardSetFields,
+  initialFlashcardSetValues,
+} from '../config/flashcardSetFields'
 
 const Flashcards = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -18,6 +17,11 @@ const Flashcards = () => {
   const [pageError, setPageError] = useState(null)
 
   const navigate = useNavigate()
+
+  const flashcardSetFields = useMemo(
+    () => getFlashcardSetFields(classes),
+    [classes]
+  )
 
   useEffect(() => {
     const fetchPageData = async () => {
@@ -68,7 +72,6 @@ const Flashcards = () => {
     fetchPageData()
   }, [])
 
-
   const createFlashcardSet = async (formData) => {
     const title = formData.title.trim()
 
@@ -117,12 +120,6 @@ const Flashcards = () => {
     setIsModalOpen(true)
   }
 
-  const getLinkedClass = (classId) => {
-    return classes.find(
-      (classItem) => classItem.id === classId
-    )
-  }
-
   return (
     <div>
       <HeaderSection
@@ -145,7 +142,6 @@ const Flashcards = () => {
         </div>
       )}
 
-      
       <FormModal
         isOpen={isModalOpen}
         title="Create Flashcard Set"

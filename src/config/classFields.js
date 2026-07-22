@@ -1,4 +1,4 @@
-const classFields = [
+export const classFields = [
   {
     name: 'name',
     label: 'Class Name',

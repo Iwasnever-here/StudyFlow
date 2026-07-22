@@ -1,4 +1,4 @@
- const todoFields = [
+ export const todoFields = [
     {
       name: 'title',
       label: 'Task',
