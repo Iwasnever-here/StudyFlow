@@ -12,6 +12,7 @@ import Review from '../pages/Review'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
 import Landing from '../pages/Landing'
+import ClassDetails from '../pages/ClassDetails'
 
 function AppRoutes() {
   return (
@@ -21,6 +22,9 @@ function AppRoutes() {
       <Route path = '/' element = {<Landing />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
+
+      {/* extras */}
+      <Route path="/classes/:classId" element={<ClassDetails />} />
 
       {/* Private Routes */}
       <Route

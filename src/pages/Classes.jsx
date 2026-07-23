@@ -3,6 +3,7 @@ import HeaderSection from '../components/pages/HeaderSection'
 import FormModal from '../components/FormModal'
 import useClasses from '../hooks/useClasses'
 import { classFields } from '../config/classFields'
+import Folder from '../components/Folder'
 
 const initialClassValues = {
   name: '',
@@ -70,49 +71,12 @@ const Classes = () => {
           </div>
         ) : (
           classes.map((classItem) => (
-            <article
-              key={classItem.id}
-              className="rounded-2xl border border-(--border) bg-(--bg-card) p-5"
-            >
-              <div className="mb-4 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-(--color-secondary)">
-                    {classItem.code}
-                  </p>
-
-                  <h2 className="text-xl font-bold text-(--text-primary)">
-                    {classItem.name}
-                  </h2>
-                </div>
-
-                <span
-                  className="h-5 w-5 shrink-0 rounded-full border border-(--border)"
-                  style={{
-                    backgroundColor:
-                      classItem.color || '#26371f',
-                  }}
-                />
-              </div>
-
-              {classItem.lecturer && (
-                <p className="text-sm text-(--text-secondary)">
-                  Lecturer: {classItem.lecturer}
-                </p>
-              )}
-
-              {classItem.target_grade !== null && (
-                <p className="mt-2 text-sm text-(--text-muted)">
-                  Target grade: {classItem.target_grade}
-                </p>
-              )}
-
-              {classItem.credits !== null && (
-                <p className="mt-1 text-sm text-(--text-muted)">
-                  Credits: {classItem.credits}
-                </p>
-              )}
-            </article>
-          ))
+  <Folder
+    key={classItem.id}
+    classItem={classItem}
+  />
+))  
+        
         )}
       </section>
 
