@@ -14,15 +14,15 @@ function LectureList({
 }){
   if (loading) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
-        <div className="border-b border-[var(--border)] px-6 py-5">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+      <section className="overflow-hidden rounded-2xl border border-(--border) bg-(--bg-card)">
+        <div className="border-b border-(--border) px-6 py-5">
+          <h2 className="text-xl font-semibold text-(--text-primary)">
             Lectures
           </h2>
         </div>
 
         <div className="flex items-center justify-center py-16">
-          <p className="text-sm text-[var(--text-muted)]">
+          <p className="text-sm text-(--text-muted)">
             Loading lectures...
           </p>
         </div>
@@ -31,14 +31,14 @@ function LectureList({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
-      <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-5">
+    <section className="overflow-hidden rounded-2xl border border-(--border) bg-(--bg-card)">
+      <div className="flex items-center justify-between border-b border-(--border) px-6 py-5">
         <div>
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+          <h2 className="text-xl font-semibold text-(--text-primary)">
             Lectures
           </h2>
 
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <p className="mt-1 text-sm text-(--text-muted)">
             {lectures.length}{' '}
             {lectures.length === 1
               ? 'lecture'
@@ -50,7 +50,7 @@ function LectureList({
           <button
             type="button"
             onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-xl bg-(--accent) px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
           >
             <LuPlus aria-hidden="true" />
             Add Lecture
@@ -61,15 +61,15 @@ function LectureList({
       {lectures.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
           <LuBookOpen
-            className="mb-4 text-[var(--text-muted)]"
+            className="mb-4 text-(--text-muted)"
             size={36}
           />
 
-          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          <h3 className="text-lg font-semibold text-(--text-primary)">
             No lectures yet
           </h3>
 
-          <p className="mt-2 max-w-sm text-sm text-[var(--text-muted)]">
+          <p className="mt-2 max-w-sm text-sm text-(--text-muted)">
             Add your first lecture or generate a
             lecture schedule when creating the class.
           </p>
@@ -78,7 +78,7 @@ function LectureList({
             <button
               type="button"
               onClick={onAdd}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-(--accent) px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
             >
               <LuPlus aria-hidden="true" />
               Add Lecture

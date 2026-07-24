@@ -16,16 +16,16 @@ function NextLectureCard({
 }) {
   if (!lecture) {
     return (
-      <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-xs font-medium text-[var(--text-muted)]">
+      <section className="rounded-xl border border-(--border) bg-(--bg-card) p-4">
+        <p className="text-xs font-medium text-(--text-muted)">
           Next lecture
         </p>
 
-        <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+        <h2 className="mt-1 text-base font-semibold text-(--text-primary)">
           No upcoming lectures
         </h2>
 
-        <p className="mt-1 text-xs text-[var(--text-muted)]">
+        <p className="mt-1 text-xs text-(--text-muted)">
           Add a lecture schedule to see the next session here.
         </p>
       </section>
@@ -40,9 +40,9 @@ function NextLectureCard({
     lecture.timeBlock?.end_time
 
   return (
-    <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]">
-      <div className="border-b border-[var(--border)] px-4 py-2.5">
-        <p className="text-xs font-medium text-[var(--text-muted)]">
+    <section className="overflow-hidden rounded-xl border border-(--border) bg-(--bg-card)">
+      <div className="border-b border-(--border) px-4 py-2.5">
+        <p className="text-xs font-medium text-(--text-muted)">
           Next lecture
         </p>
       </div>
@@ -50,16 +50,16 @@ function NextLectureCard({
       <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           {lecture.week_number && (
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-(--text-muted)">
               Week {lecture.week_number}
             </p>
           )}
 
-          <h2 className="mt-1 truncate text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="mt-1 truncate text-lg font-semibold text-(--text-primary)">
             {lecture.title}
           </h2>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-muted)]">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--text-muted)">
             <span className="inline-flex items-center gap-1.5">
               <LuCalendarDays aria-hidden="true" />
               {formatDateForDisplay(
@@ -94,7 +94,7 @@ function NextLectureCard({
               href={lecture.lecture_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] px-2.5 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-hover)]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-(--border) px-2.5 text-xs font-medium text-(--text-primary) transition hover:bg-(--bg-hover)"
             >
               <LuExternalLink aria-hidden="true" />
               Open
@@ -107,7 +107,7 @@ function NextLectureCard({
               onToggleComplete?.(lecture.id)
             }
             disabled={updating}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-(--text-primary) transition hover:bg-(--bg-hover) disabled:cursor-not-allowed disabled:opacity-50"
           >
             <LuCheck aria-hidden="true" />
             {updating

@@ -3,18 +3,30 @@ import { useNavigate } from 'react-router-dom'
 const Folder = ({ classItem }) => {
   const navigate = useNavigate()
 
-  const folderColor = classItem.color || '#26371f'
+  const classColor =
+    classItem.color || '#26371f'
 
   const openClass = () => {
     navigate(`/classes/${classItem.id}`)
   }
 
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (
+      event.key === 'Enter' ||
+      event.key === ' '
+    ) {
       event.preventDefault()
       openClass()
     }
   }
+
+  const hasTargetGrade =
+    classItem.target_grade !== null &&
+    classItem.target_grade !== ''
+
+  const hasCredits =
+    classItem.credits !== null &&
+    classItem.credits !== ''
 
   return (
     <article
@@ -24,115 +36,120 @@ const Folder = ({ classItem }) => {
       onClick={openClass}
       onKeyDown={handleKeyDown}
       className="
-        group relative h-52 cursor-pointer
-        transition-transform duration-200 ease-out
-        hover:-translate-y-1
+        group relative cursor-pointer
+        overflow-hidden rounded-2xl
+        border border-(--border)
+        bg-(--bg-card)
+        p-5 shadow-sm
+        transition-all duration-200
+        hover:-translate-y-0.5
+        hover:border-(--color-secondary)
+        hover:shadow-md
         focus:outline-none
         focus-visible:ring-2
         focus-visible:ring-(--color-primary)
         focus-visible:ring-offset-2
       "
     >
-      {/* Folder tab */}
       <div
-        className="
-          absolute left-0 top-0 h-9 w-28
-          rounded-t-xl border border-b-0 border-(--border)
-        "
-        style={{ backgroundColor: folderColor }}
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-1"
+        style={{
+          backgroundColor: classColor,
+        }}
       />
 
-      {/* Main folder body */}
-      <div
-        className="
-          absolute inset-x-0 bottom-0 top-8
-          overflow-hidden rounded-2xl rounded-tl-none
-          border border-(--border)
-          bg-(--bg-card)
-          shadow-sm
-          transition-all duration-200
-          group-hover:border-(--color-secondary)
-          group-hover:shadow-md
-        "
-      >
-        {/* Accent line */}
-        <div
-          className="absolute inset-y-0 left-0 w-1.5"
-          style={{ backgroundColor: folderColor }}
-        />
-
-        <div className="flex h-full flex-col justify-between p-5 pl-7">
-          <div>
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p
-                  className="
-                    text-xs font-bold uppercase tracking-[0.16em]
-                  "
-                  style={{ color: folderColor }}
-                >
-                  {classItem.code || 'Class'}
-                </p>
-
-                <h2 className="mt-2 truncate text-xl font-bold text-(--text-primary)">
-                  {classItem.name}
-                </h2>
-              </div>
-
-              <span
-                className="mt-1 h-3 w-3 shrink-0 rounded-full"
-                style={{ backgroundColor: folderColor }}
-              />
-            </div>
-
-            {classItem.lecturer && (
-              <p className="mt-3 truncate text-sm text-(--text-muted)">
-                {classItem.lecturer}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-end justify-between gap-4">
-            <div className="flex gap-5">
-              {classItem.target_grade !== null &&
-                classItem.target_grade !== '' && (
-                  <div>
-                    <p className="text-xs text-(--text-muted)">
-                      Target
-                    </p>
-
-                    <p className="mt-0.5 text-sm font-semibold text-(--text-primary)">
-                      {classItem.target_grade}
-                    </p>
-                  </div>
-                )}
-
-              {classItem.credits !== null &&
-                classItem.credits !== '' && (
-                  <div>
-                    <p className="text-xs text-(--text-muted)">
-                      Credits
-                    </p>
-
-                    <p className="mt-0.5 text-sm font-semibold text-(--text-primary)">
-                      {classItem.credits}
-                    </p>
-                  </div>
-                )}
-            </div>
-
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
             <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{
+                backgroundColor: classColor,
+              }}
+            />
+
+            <p
               className="
-                text-sm font-semibold text-(--text-muted)
-                transition-transform duration-200
-                group-hover:translate-x-1
-                group-hover:text-(--text-primary)
+                truncate text-xs font-bold
+                uppercase tracking-[0.16em]
               "
+              style={{
+                color: classColor,
+              }}
             >
-              View →
-            </span>
+              {classItem.code || 'Class'}
+            </p>
           </div>
+
+          <h2 className="mt-3 truncate text-lg font-bold text-(--text-primary)">
+            {classItem.name}
+          </h2>
+
+          <p className="mt-1 truncate text-sm text-(--text-muted)">
+            {classItem.lecturer ||
+              'Lecturer not set'}
+          </p>
         </div>
+
+        <span
+          aria-hidden="true"
+          className="
+            shrink-0 text-lg
+            text-(--text-muted)
+            transition-transform duration-200
+            group-hover:translate-x-1
+            group-hover:text-(--text-primary)
+          "
+        >
+          →
+        </span>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {hasTargetGrade && (
+          <span
+            className="
+              rounded-lg border
+              border-(--border)
+              bg-(--bg-input)
+              px-2.5 py-1.5
+              text-xs font-medium
+              text-(--text-secondary)
+            "
+          >
+            Target: {classItem.target_grade}
+          </span>
+        )}
+
+        {hasCredits && (
+          <span
+            className="
+              rounded-lg border
+              border-(--border)
+              bg-(--bg-input)
+              px-2.5 py-1.5
+              text-xs font-medium
+              text-(--text-secondary)
+            "
+          >
+            {classItem.credits} credits
+          </span>
+        )}
+      </div>
+
+      <div className="mt-5 border-t border-(--border) pt-4">
+        <span
+          className="
+            text-sm font-semibold
+            text-(--text-secondary)
+            transition-colors
+            group-hover:text-(--text-primary)
+          "
+        >
+          click to view
+        </span>
       </div>
     </article>
   )

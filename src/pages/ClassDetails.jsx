@@ -252,7 +252,7 @@ const ClassDetails = () => {
   if (loading) {
     return (
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <p className="text-sm text-[var(--text-muted)]">
+        <p className="text-sm text-(--text-muted)">
           Loading class...
         </p>
       </main>
@@ -264,13 +264,13 @@ const ClassDetails = () => {
       <main className="mx-auto max-w-7xl px-4 py-8">
         <Link
           to="/classes"
-          className="text-sm font-medium text-[var(--color-secondary)]"
+          className="text-sm font-medium text-(--color-secondary)"
         >
           ← Back to classes
         </Link>
 
-        <div className="mt-6 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] p-4">
-          <p className="text-sm text-[var(--error-text)]">
+        <div className="mt-6 rounded-xl border border-(--error-border) bg-(--error-bg) p-4">
+          <p className="text-sm text-(--error-text)">
             {error || 'Class not found.'}
           </p>
         </div>
@@ -287,9 +287,9 @@ const ClassDetails = () => {
         to="/classes"
         className="
           text-sm font-medium
-          text-[var(--text-muted)]
+          text-(--text-muted)
           transition
-          hover:text-[var(--text-primary)]
+          hover:text-(--text-primary)
         "
       >
         ← Back to classes
@@ -314,12 +314,12 @@ const ClassDetails = () => {
               {classItem.code || 'Class'}
             </p>
 
-            <h1 className="mt-1 text-3xl font-bold text-[var(--text-primary)]">
+            <h1 className="mt-1 text-3xl font-bold text-(--text-primary)">
               {classItem.name}
             </h1>
 
             {classItem.lecturer && (
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
+              <p className="mt-2 text-sm text-(--text-muted)">
                 Lecturer:{' '}
                 {classItem.lecturer}
               </p>
@@ -334,13 +334,13 @@ const ClassDetails = () => {
           }
           className="
             rounded-xl border
-            border-[var(--border)]
-            bg-[var(--bg-card)]
+            border-(--border)
+            bg-(--bg-card)
             px-4 py-2.5
             text-sm font-semibold
-            text-[var(--text-primary)]
+            text-(--text-primary)
             transition
-            hover:bg-[var(--bg-hover)]
+            hover:bg-(--bg-hover)
           "
         >
           Edit class
@@ -348,8 +348,8 @@ const ClassDetails = () => {
       </header>
 
       {actionError && (
-        <div className="mt-6 rounded-xl border border-[var(--error-border)] bg-[var(--error-bg)] px-4 py-3">
-          <p className="text-sm font-medium text-[var(--error-text)]">
+        <div className="mt-6 rounded-xl border border-(--error-border) bg-(--error-bg) px-4 py-3">
+          <p className="text-sm font-medium text-(--error-text)">
             {actionError}
           </p>
         </div>
@@ -489,17 +489,17 @@ const StatCard = ({
   value,
   description,
 }) => (
-  <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-    <p className="text-sm font-medium text-[var(--text-muted)]">
+  <div className="rounded-2xl border border-(--border) bg-(--bg-card) p-5">
+    <p className="text-sm font-medium text-(--text-muted)">
       {label}
     </p>
 
-    <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">
+    <p className="mt-2 text-2xl font-bold text-(--text-primary)">
       {value}
     </p>
 
     {description && (
-      <p className="mt-1 text-xs text-[var(--text-muted)]">
+      <p className="mt-1 text-xs text-(--text-muted)">
         {description}
       </p>
     )}
@@ -529,38 +529,38 @@ const CourseworkSummaryCard = ({
       : 100 - remainingPercentage
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+    <section className="rounded-2xl border border-(--border) bg-(--bg-card) p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-bold text-[var(--text-primary)]">
+        <h2 className="font-bold text-(--text-primary)">
           Coursework
         </h2>
 
-        <span className="text-sm font-semibold text-[var(--text-muted)]">
+        <span className="text-sm font-semibold text-(--text-muted)">
           {summary.total}
         </span>
       </div>
 
       <div className="mt-5">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-[var(--text-muted)]">
+          <p className="text-sm text-(--text-muted)">
             Progress
           </p>
 
-          <p className="text-sm font-semibold text-[var(--text-primary)]">
+          <p className="text-sm font-semibold text-(--text-primary)">
             {remainingPercentage}% left
           </p>
         </div>
 
-        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--bg-input)]">
+        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-(--bg-input)">
           <div
-            className="h-full rounded-full bg-[var(--color-primary)] transition-[width] duration-300"
+            className="h-full rounded-full bg-(--color-primary) transition-[width] duration-300"
             style={{
               width: `${completedPercentage}%`,
             }}
           />
         </div>
 
-        <p className="mt-2 text-xs text-[var(--text-muted)]">
+        <p className="mt-2 text-xs text-(--text-muted)]">
           {summary.completed} of{' '}
           {summary.total} completed
         </p>
@@ -584,12 +584,12 @@ const CourseworkSummaryCard = ({
       </dl>
 
       {nextAssignment && (
-        <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-input)] p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
+        <div className="mt-5 rounded-xl border border-(--border)] bg-(--bg-input)] p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-(--text-muted)]">
             Up next
           </p>
 
-          <p className="mt-1 truncate text-sm font-semibold text-[var(--text-primary)]">
+          <p className="mt-1 truncate text-sm font-semibold text-(--text-primary)]">
             {nextAssignment.title}
           </p>
         </div>
@@ -602,13 +602,13 @@ const CourseworkSummaryCard = ({
             flex items-center
             justify-between
             rounded-xl border
-            border-[var(--border)]
+            border-(--border)]
             px-4 py-3
             text-sm font-semibold
-            text-[var(--text-secondary)]
+            text-(--text-secondary)]
             transition
-            hover:bg-[var(--bg-hover)]
-            hover:text-[var(--text-primary)]
+            hover:bg-(--bg-hover)]
+            hover:text-(--text-primary)]
           "
         >
           <span>View coursework</span>
@@ -623,13 +623,13 @@ const CourseworkSummaryCard = ({
             flex items-center
             justify-between
             rounded-xl border
-            border-[var(--border)]
+            border-(--border)]
             px-4 py-3
             text-sm font-semibold
-            text-[var(--text-secondary)]
+            text-(--text-secondary)]
             transition
-            hover:bg-[var(--bg-hover)]
-            hover:text-[var(--text-primary)]
+            hover:bg-(--bg-hover)]
+            hover:text-(--text-primary)]
           "
         >
           <span>
@@ -652,8 +652,8 @@ const ClassInformationCard = ({
   classItem,
   lectureProgress,
 }) => (
-  <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-    <h2 className="font-bold text-[var(--text-primary)]">
+  <section className="rounded-2xl border border-(--border) bg-(--bg-card) p-5">
+    <h2 className="font-bold text-(--text-primary)">
       Class information
     </h2>
 
@@ -694,11 +694,11 @@ const InfoRow = ({
   value,
 }) => (
   <div className="flex items-center justify-between gap-4">
-    <dt className="text-sm text-[var(--text-muted)]">
+    <dt className="text-sm text-(--text-muted)">
       {label}
     </dt>
 
-    <dd className="max-w-[60%] truncate text-right text-sm font-semibold text-[var(--text-primary)]">
+    <dd className="max-w-[60%] truncate text-right text-sm font-semibold text-(--text-primary)">
       {value}
     </dd>
   </div>
