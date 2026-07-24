@@ -1,14 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import HeaderSection from '../components/pages/HeaderSection'
 import FormModal from '../components/FormModal'
+import TodoColumn from '../components/todo/TodoColumn'
 import { supabase } from '../lib/supabaseClient'
-import { todoFields } from '../config/todoFields'
+import { initialTodoFields } from '../config/todoFields'
+
+const TODO_INITIAL_VALUES = {
+  title: '',
+  priority: 'medium',
+  class_id: '',
+}
+
 const Todo = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [todos, setTodos] = useState([])
+  const [classes, setClasses] = useState([])
+  const [selectedClassId, setSelectedClassId] = useState('all')
+  const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState(null)
 
-  const fetchTodos = async () => {
+  const fetchPageData = async () => {
+    setLoading(true)
     setPageError(null)
 
     const {
@@ -18,31 +30,91 @@ const Todo = () => {
 
     if (userError) {
       setPageError(userError.message)
+      setLoading(false)
       return
     }
 
     if (!user) {
       setPageError('You must be signed in to view your tasks.')
+      setLoading(false)
       return
     }
 
-    const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    const [todosResult, classesResult] = await Promise.all([
+      supabase
+        .from('todos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', {
+          ascending: false,
+        }),
 
-    if (error) {
-      setPageError(error.message)
-      return
+      supabase
+        .from('classes')
+        .select('id, name, code, color')
+        .order('name', {
+          ascending: true,
+        }),
+    ])
+
+    const errors = [
+      todosResult.error?.message,
+      classesResult.error?.message,
+    ].filter(Boolean)
+
+    if (errors.length > 0) {
+      setPageError(errors.join(' '))
     }
 
-    setTodos(data || [])
+    setTodos(todosResult.data || [])
+    setClasses(classesResult.data || [])
+    setLoading(false)
   }
 
   useEffect(() => {
-    fetchTodos()
+    fetchPageData()
   }, [])
+
+  const todoFields = useMemo(
+    () => initialTodoFields(classes),
+    [classes]
+  )
+
+  const classesById = useMemo(() => {
+    return classes.reduce((classMap, classItem) => {
+      classMap[classItem.id] = classItem
+      return classMap
+    }, {})
+  }, [classes])
+
+  const filteredTodos = useMemo(() => {
+    if (selectedClassId === 'all') {
+      return todos
+    }
+
+    if (selectedClassId === 'unassigned') {
+      return todos.filter((todo) => !todo.class_id)
+    }
+
+    return todos.filter(
+      (todo) => todo.class_id === selectedClassId
+    )
+  }, [todos, selectedClassId])
+
+  const groupedTodos = useMemo(
+    () => ({
+      low: filteredTodos.filter(
+        (todo) => todo.priority?.toLowerCase() === 'low'
+      ),
+      medium: filteredTodos.filter(
+        (todo) => todo.priority?.toLowerCase() === 'medium'
+      ),
+      high: filteredTodos.filter(
+        (todo) => todo.priority?.toLowerCase() === 'high'
+      ),
+    }),
+    [filteredTodos]
+  )
 
   const createTodo = async (formData) => {
     const title = formData.title.trim()
@@ -51,12 +123,18 @@ const Todo = () => {
       throw new Error('Please enter a task.')
     }
 
+    if (!formData.priority) {
+      throw new Error('Please choose a priority.')
+    }
+
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser()
 
-    if (userError) throw userError
+    if (userError) {
+      throw userError
+    }
 
     if (!user) {
       throw new Error('You must be signed in to create a task.')
@@ -65,14 +143,10 @@ const Todo = () => {
     const newTodo = {
       title,
       priority: formData.priority,
+      class_id: formData.class_id || null,
       completed: false,
       completed_at: null,
       user_id: user.id,
-    }
-
-    // Only include class_id when the user entered one.
-    if (formData.class_id?.trim()) {
-      newTodo.class_id = formData.class_id.trim()
     }
 
     const { data, error } = await supabase
@@ -81,34 +155,38 @@ const Todo = () => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      throw error
+    }
 
-    setTodos((currentTodos) => [data, ...currentTodos])
+    setTodos((currentTodos) => [
+      data,
+      ...currentTodos,
+    ])
   }
 
-  const toggleTodo = async (todo) => {
-    const isCompleted = !todo.completed
+  const completeTodo = async (todo) => {
+    if (!todo) return
 
-    const { data, error } = await supabase
+    setPageError(null)
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 2000)
+    })
+
+    const { error } = await supabase
       .from('todos')
-      .update({
-        completed: isCompleted,
-        completed_at: isCompleted
-          ? new Date().toISOString()
-          : null,
-      })
+      .delete()
       .eq('id', todo.id)
-      .select()
-      .single()
 
     if (error) {
       setPageError(error.message)
-      return
+      throw error
     }
 
     setTodos((currentTodos) =>
-      currentTodos.map((currentTodo) =>
-        currentTodo.id === data.id ? data : currentTodo
+      currentTodos.filter(
+        (currentTodo) => currentTodo.id !== todo.id
       )
     )
   }
@@ -118,28 +196,143 @@ const Todo = () => {
       <HeaderSection
         eyebrow="Todo"
         title="Your Todo List"
-        description="Keep track of your tasks and stay productive."
+        description="Organise tasks by priority and class."
         buttonText="Add Task"
         onButtonClick={() => setIsModalOpen(true)}
       />
 
-      {pageError && (
-        <p className="error-message">
-          {pageError}
-        </p>
-      )}
+      <main className="mt-8">
+        <div
+          className="
+            mb-6 flex flex-col gap-4
+            sm:flex-row
+            sm:items-end
+            sm:justify-between
+          "
+        >
+    
 
-      
+          <div className="w-full sm:w-64">
+            <label
+              htmlFor="todo-class-filter"
+              className="
+                mb-2 block text-xs font-semibold
+                uppercase tracking-[0.12em]
+                text-[var(--text-muted)]
+              "
+            >
+              Filter by class
+            </label>
+
+            <select
+              id="todo-class-filter"
+              value={selectedClassId}
+              onChange={(event) =>
+                setSelectedClassId(event.target.value)
+              }
+              className="
+                w-full rounded-xl
+                border border-[var(--border)]
+                bg-[var(--bg-card)]
+                px-4 py-3
+                text-sm
+                text-[var(--text-primary)]
+                outline-none
+                focus:border-[var(--border-accent)]
+                focus:ring-4
+                focus:ring-[var(--color-primary)]/15
+              "
+            >
+              <option value="all">All classes</option>
+              <option value="unassigned">No class</option>
+
+              {classes.map((classItem) => (
+                <option
+                  key={classItem.id}
+                  value={classItem.id}
+                >
+                  {classItem.code
+                    ? `${classItem.name} (${classItem.code})`
+                    : classItem.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {pageError && (
+          <div
+            className="
+              mb-6 rounded-xl
+              border border-[var(--error-border)]
+              bg-[var(--error-bg)]
+              px-4 py-3
+            "
+          >
+            <p
+              className="
+                text-sm font-medium
+                text-[var(--error-text)]
+              "
+            >
+              {pageError}
+            </p>
+          </div>
+        )}
+
+        {loading ? (
+          <div
+            className="
+              rounded-3xl
+              border border-[var(--border)]
+              bg-[var(--bg-card)]
+              px-6 py-16
+              text-center
+            "
+          >
+            <p className="text-sm text-[var(--text-muted)]">
+              Loading tasks...
+            </p>
+          </div>
+        ) : (
+          <div
+            className="
+              grid items-start gap-5
+              lg:grid-cols-3
+            "
+          >
+            <TodoColumn
+              title="Low Priority"
+              priority="low"
+              todos={groupedTodos.low}
+              classesById={classesById}
+              onComplete={completeTodo}
+            />
+
+            <TodoColumn
+              title="Medium Priority"
+              priority="medium"
+              todos={groupedTodos.medium}
+              classesById={classesById}
+              onComplete={completeTodo}
+            />
+
+            <TodoColumn
+              title="High Priority"
+              priority="high"
+              todos={groupedTodos.high}
+              classesById={classesById}
+              onComplete={completeTodo}
+            />
+          </div>
+        )}
+      </main>
 
       <FormModal
         isOpen={isModalOpen}
         title="Add Task"
         fields={todoFields}
-        initialValues={{
-          title: '',
-          priority: 'medium',
-          class_id: '',
-        }}
+        initialValues={TODO_INITIAL_VALUES}
         onSubmit={createTodo}
         onClose={() => setIsModalOpen(false)}
       />
