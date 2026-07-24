@@ -24,6 +24,8 @@ const TodoColumn = ({
   todos = [],
   classesById = {},
   onComplete,
+  onEdit,
+  onDelete,
 }) => {
   const styles =
     priorityStyles[priority] ||
@@ -33,8 +35,8 @@ const TodoColumn = ({
     <section
       className="
         min-w-0 rounded-3xl
-        border border-[var(--border)]
-        bg-[var(--bg-card)]
+        border border-(--border)
+        bg-(--bg-card)
         p-4
         sm:p-5
       "
@@ -56,7 +58,7 @@ const TodoColumn = ({
           <h2
             className="
               text-sm font-bold
-              text-[var(--text-primary)]
+              text-(--text-primary)
             "
           >
             {title}
@@ -80,7 +82,7 @@ const TodoColumn = ({
             className="
               rounded-2xl
               border border-dashed
-              border-[var(--border)]
+              border-(--border)
               px-4 py-10
               text-center
             "
@@ -88,7 +90,7 @@ const TodoColumn = ({
             <p
               className="
                 text-sm font-medium
-                text-[var(--text-muted)]
+                text-(--text-muted)
               "
             >
               No {priority} priority tasks
@@ -96,15 +98,17 @@ const TodoColumn = ({
           </div>
         ) : (
           todos.map((todo) => (
-            <TodoCard
-              key={todo.id}
-              todo={todo}
-              classItem={
+           <TodoCard
+            key={todo.id}
+            todo={todo}
+            classItem={
                 todo.class_id
-                  ? classesById[todo.class_id]
-                  : null
-              }
-              onComplete={onComplete}
+                ? classesById[todo.class_id]
+                : null
+            }
+            onComplete={onComplete}
+            onEdit={onEdit}
+            onDelete={onDelete}
             />
           ))
         )}

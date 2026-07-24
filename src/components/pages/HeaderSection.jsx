@@ -14,7 +14,7 @@ function HeaderSection({
         border border-(--border)
         bg-(--bg-card)
         p-8
-        shadow-[0_20px_50px_rgba(38,55,31,0.12)]
+        shadow-sm
         md:flex-row
         md:items-center
         md:justify-between
@@ -48,7 +48,7 @@ function HeaderSection({
               text-lg
               font-bold
               text-(--text-light)
-              shadow-lg
+              shadow-sm
               transition-all
               duration-200
               hover:bg-(--color-primary-hover)

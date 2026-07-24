@@ -13,9 +13,12 @@ const TODO_INITIAL_VALUES = {
 
 const Todo = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingTodo, setEditingTodo] = useState(null)
+
   const [todos, setTodos] = useState([])
   const [classes, setClasses] = useState([])
   const [selectedClassId, setSelectedClassId] = useState('all')
+
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState(null)
 
@@ -35,27 +38,30 @@ const Todo = () => {
     }
 
     if (!user) {
-      setPageError('You must be signed in to view your tasks.')
+      setPageError(
+        'You must be signed in to view your tasks.'
+      )
       setLoading(false)
       return
     }
 
-    const [todosResult, classesResult] = await Promise.all([
-      supabase
-        .from('todos')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', {
-          ascending: false,
-        }),
+    const [todosResult, classesResult] =
+      await Promise.all([
+        supabase
+          .from('todos')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', {
+            ascending: false,
+          }),
 
-      supabase
-        .from('classes')
-        .select('id, name, code, color')
-        .order('name', {
-          ascending: true,
-        }),
-    ])
+        supabase
+          .from('classes')
+          .select('id, name, code, color')
+          .order('name', {
+            ascending: true,
+          }),
+      ])
 
     const errors = [
       todosResult.error?.message,
@@ -81,10 +87,13 @@ const Todo = () => {
   )
 
   const classesById = useMemo(() => {
-    return classes.reduce((classMap, classItem) => {
-      classMap[classItem.id] = classItem
-      return classMap
-    }, {})
+    return classes.reduce(
+      (classMap, classItem) => {
+        classMap[classItem.id] = classItem
+        return classMap
+      },
+      {}
+    )
   }, [classes])
 
   const filteredTodos = useMemo(() => {
@@ -93,28 +102,52 @@ const Todo = () => {
     }
 
     if (selectedClassId === 'unassigned') {
-      return todos.filter((todo) => !todo.class_id)
+      return todos.filter(
+        (todo) => !todo.class_id
+      )
     }
 
     return todos.filter(
-      (todo) => todo.class_id === selectedClassId
+      (todo) =>
+        todo.class_id === selectedClassId
     )
   }, [todos, selectedClassId])
 
   const groupedTodos = useMemo(
     () => ({
       low: filteredTodos.filter(
-        (todo) => todo.priority?.toLowerCase() === 'low'
+        (todo) =>
+          todo.priority?.toLowerCase() === 'low'
       ),
+
       medium: filteredTodos.filter(
-        (todo) => todo.priority?.toLowerCase() === 'medium'
+        (todo) =>
+          todo.priority?.toLowerCase() ===
+          'medium'
       ),
+
       high: filteredTodos.filter(
-        (todo) => todo.priority?.toLowerCase() === 'high'
+        (todo) =>
+          todo.priority?.toLowerCase() === 'high'
       ),
     }),
     [filteredTodos]
   )
+
+  const openCreateModal = () => {
+    setEditingTodo(null)
+    setIsModalOpen(true)
+  }
+
+  const openEditModal = (todo) => {
+    setEditingTodo(todo)
+    setIsModalOpen(true)
+  }
+
+  const closeTodoModal = () => {
+    setIsModalOpen(false)
+    setEditingTodo(null)
+  }
 
   const createTodo = async (formData) => {
     const title = formData.title.trim()
@@ -124,7 +157,9 @@ const Todo = () => {
     }
 
     if (!formData.priority) {
-      throw new Error('Please choose a priority.')
+      throw new Error(
+        'Please choose a priority.'
+      )
     }
 
     const {
@@ -137,7 +172,9 @@ const Todo = () => {
     }
 
     if (!user) {
-      throw new Error('You must be signed in to create a task.')
+      throw new Error(
+        'You must be signed in to create a task.'
+      )
     }
 
     const newTodo = {
@@ -165,6 +202,78 @@ const Todo = () => {
     ])
   }
 
+  const updateTodo = async (formData) => {
+    if (!editingTodo) return
+
+    const title = formData.title.trim()
+
+    if (!title) {
+      throw new Error('Please enter a task.')
+    }
+
+    if (!formData.priority) {
+      throw new Error(
+        'Please choose a priority.'
+      )
+    }
+
+    const updates = {
+      title,
+      priority: formData.priority,
+      class_id: formData.class_id || null,
+    }
+
+    const { data, error } = await supabase
+      .from('todos')
+      .update(updates)
+      .eq('id', editingTodo.id)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    setTodos((currentTodos) =>
+      currentTodos.map((todo) =>
+        todo.id === data.id ? data : todo
+      )
+    )
+  }
+
+  const handleTodoSubmit = async (formData) => {
+    if (editingTodo) {
+      await updateTodo(formData)
+    } else {
+      await createTodo(formData)
+    }
+
+    closeTodoModal()
+  }
+
+  const deleteTodo = async (todo) => {
+    if (!todo) return
+
+    setPageError(null)
+
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', todo.id)
+
+    if (error) {
+      setPageError(error.message)
+      return
+    }
+
+    setTodos((currentTodos) =>
+      currentTodos.filter(
+        (currentTodo) =>
+          currentTodo.id !== todo.id
+      )
+    )
+  }
+
   const completeTodo = async (todo) => {
     if (!todo) return
 
@@ -186,10 +295,20 @@ const Todo = () => {
 
     setTodos((currentTodos) =>
       currentTodos.filter(
-        (currentTodo) => currentTodo.id !== todo.id
+        (currentTodo) =>
+          currentTodo.id !== todo.id
       )
     )
   }
+
+  const modalInitialValues = editingTodo
+    ? {
+        title: editingTodo.title || '',
+        priority:
+          editingTodo.priority || 'medium',
+        class_id: editingTodo.class_id || '',
+      }
+    : TODO_INITIAL_VALUES
 
   return (
     <div>
@@ -198,7 +317,7 @@ const Todo = () => {
         title="Your Todo List"
         description="Organise tasks by priority and class."
         buttonText="Add Task"
-        onButtonClick={() => setIsModalOpen(true)}
+        onButtonClick={openCreateModal}
       />
 
       <main className="mt-8">
@@ -210,7 +329,7 @@ const Todo = () => {
             sm:justify-between
           "
         >
-    
+
 
           <div className="w-full sm:w-64">
             <label
@@ -218,7 +337,7 @@ const Todo = () => {
               className="
                 mb-2 block text-xs font-semibold
                 uppercase tracking-[0.12em]
-                text-[var(--text-muted)]
+                text-(--text-muted)
               "
             >
               Filter by class
@@ -228,23 +347,30 @@ const Todo = () => {
               id="todo-class-filter"
               value={selectedClassId}
               onChange={(event) =>
-                setSelectedClassId(event.target.value)
+                setSelectedClassId(
+                  event.target.value
+                )
               }
               className="
                 w-full rounded-xl
-                border border-[var(--border)]
-                bg-[var(--bg-card)]
+                border border-(--border)
+                bg-(--bg-card)
                 px-4 py-3
                 text-sm
-                text-[var(--text-primary)]
+                text-(--text-primary)
                 outline-none
-                focus:border-[var(--border-accent)]
+                focus:border-(--border-accent)
                 focus:ring-4
-                focus:ring-[var(--color-primary)]/15
+                focus:ring-(--color-primary)/15
               "
             >
-              <option value="all">All classes</option>
-              <option value="unassigned">No class</option>
+              <option value="all">
+                All classes
+              </option>
+
+              <option value="unassigned">
+                No class
+              </option>
 
               {classes.map((classItem) => (
                 <option
@@ -264,15 +390,15 @@ const Todo = () => {
           <div
             className="
               mb-6 rounded-xl
-              border border-[var(--error-border)]
-              bg-[var(--error-bg)]
+              border border-(--error-border)
+              bg-(--error-bg)
               px-4 py-3
             "
           >
             <p
               className="
                 text-sm font-medium
-                text-[var(--error-text)]
+                text-(--error-text)
               "
             >
               {pageError}
@@ -284,13 +410,18 @@ const Todo = () => {
           <div
             className="
               rounded-3xl
-              border border-[var(--border)]
-              bg-[var(--bg-card)]
+              border border-(--border)
+              bg-(--bg-card)
               px-6 py-16
               text-center
             "
           >
-            <p className="text-sm text-[var(--text-muted)]">
+            <p
+              className="
+                text-sm
+                text-(--text-muted)
+              "
+            >
               Loading tasks...
             </p>
           </div>
@@ -307,6 +438,8 @@ const Todo = () => {
               todos={groupedTodos.low}
               classesById={classesById}
               onComplete={completeTodo}
+              onEdit={openEditModal}
+              onDelete={deleteTodo}
             />
 
             <TodoColumn
@@ -315,6 +448,8 @@ const Todo = () => {
               todos={groupedTodos.medium}
               classesById={classesById}
               onComplete={completeTodo}
+              onEdit={openEditModal}
+              onDelete={deleteTodo}
             />
 
             <TodoColumn
@@ -323,18 +458,25 @@ const Todo = () => {
               todos={groupedTodos.high}
               classesById={classesById}
               onComplete={completeTodo}
+              onEdit={openEditModal}
+              onDelete={deleteTodo}
             />
           </div>
         )}
       </main>
 
       <FormModal
+        key={editingTodo?.id || 'new-todo'}
         isOpen={isModalOpen}
-        title="Add Task"
+        title={
+          editingTodo
+            ? 'Edit Task'
+            : 'Add Task'
+        }
         fields={todoFields}
-        initialValues={TODO_INITIAL_VALUES}
-        onSubmit={createTodo}
-        onClose={() => setIsModalOpen(false)}
+        initialValues={modalInitialValues}
+        onSubmit={handleTodoSubmit}
+        onClose={closeTodoModal}
       />
     </div>
   )
