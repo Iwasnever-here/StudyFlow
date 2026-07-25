@@ -260,9 +260,9 @@ const TodoCard = ({
                   flex w-full items-center gap-2
                   rounded-lg px-3 py-2
                   text-left text-sm font-medium
-                  text-red-600
+                  text-(--error-text)
                   transition
-                  hover:bg-red-500/10
+                  hover:bg-(--error-bg)
                 "
               >
                 <LuTrash2 size={15} />

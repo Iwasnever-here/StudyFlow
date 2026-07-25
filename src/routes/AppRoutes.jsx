@@ -13,6 +13,7 @@ import Login from '../pages/Login'
 import Register from '../pages/Register'
 import Landing from '../pages/Landing'
 import ClassDetails from '../pages/ClassDetails'
+import FlashcardSet from '../pages/FlashcardSet'
 
 function AppRoutes() {
   return (
@@ -22,9 +23,6 @@ function AppRoutes() {
       <Route path = '/' element = {<Landing />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
-
-      {/* extras */}
-      <Route path="/classes/:classId" element={<ClassDetails />} />
 
       {/* Private Routes */}
       <Route
@@ -41,6 +39,13 @@ function AppRoutes() {
         <Route path="/flashcards" element={<Flashcards />} />
         <Route path="/todo" element={<ToDo />} />
         <Route path="/review" element={<Review />} />
+
+        {/* extras */}
+      <Route path="/classes/:classId" element={<ClassDetails />} />
+      <Route path="/flashcards/:setId" element={<FlashcardSet />}/>
+      {/*<Route path="/flashcards/:setId/quiz" element={<FlashcardQuiz />}/>*/}
+      {/*<Route path="/flashcards/:setId/game" element={<FlashcardGame />} />*/}
+      {/* Private Routes */}
       </Route>
 
     </Routes>

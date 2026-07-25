@@ -198,7 +198,7 @@ function LectureRow({
               onClick={handleDelete}
               disabled={updating || deleting}
               aria-label={`Delete ${lecture.title}`}
-              className="inline-flex size-9 items-center justify-center rounded-lg border border-(--border) text-(--text-muted) transition hover:bg-(--bg-card) hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex size-9 items-center justify-center rounded-lg border border-(--border) text-(--text-muted) transition hover:text-(--error-text) hover:bg-(--error-bg)  hover:border-(--error-border) disabled:cursor-not-allowed disabled:opacity-50"
             >
               <LuTrash2 aria-hidden="true" />
             </button>
