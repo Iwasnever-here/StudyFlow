@@ -14,6 +14,8 @@ import Register from '../pages/Register'
 import Landing from '../pages/Landing'
 import ClassDetails from '../pages/ClassDetails'
 import FlashcardSet from '../pages/FlashcardSet'
+import FlashcardQuiz from '../pages/FlashcardQuiz'
+import FlashcardReview from '../pages/FlashcardReview'
 
 function AppRoutes() {
   return (
@@ -43,9 +45,9 @@ function AppRoutes() {
         {/* extras */}
       <Route path="/classes/:classId" element={<ClassDetails />} />
       <Route path="/flashcards/:setId" element={<FlashcardSet />}/>
-      {/*<Route path="/flashcards/:setId/quiz" element={<FlashcardQuiz />}/>*/}
-      {/*<Route path="/flashcards/:setId/game" element={<FlashcardGame />} />*/}
-      {/* Private Routes */}
+      <Route path="/flashcards/:setId/quiz" element={<FlashcardQuiz />}/>
+      <Route path="/flashcards/:setId/review" element={<FlashcardReview />} />
+      
       </Route>
 
     </Routes>

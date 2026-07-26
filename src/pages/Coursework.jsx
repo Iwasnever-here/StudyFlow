@@ -1,20 +1,34 @@
-import { useMemo, useState } from 'react'
-import { LuBookOpen } from 'react-icons/lu'
+import {
+  useMemo,
+  useState,
+} from 'react'
+import {
+  LuBookOpen,
+  LuCalendarClock,
+} from 'react-icons/lu'
 import HeaderSection from '../components/pages/HeaderSection'
 import FormModal from '../components/FormModal'
 import CourseworkCard from '../components/coursework/CourseworkCard'
 import useCoursework from '../hooks/useCoursework'
+import useCourseworkSchedule from '../hooks/useCourseworkSchedule'
 import {
   getCourseworkFields,
   initialCourseworkValues,
 } from '../config/courseworkFields'
 
-const getEditValues = (assignment) => ({
-  class_id: assignment.class_id || '',
+const getEditValues = (
+  assignment,
+) => ({
+  class_id:
+    assignment.class_id || '',
   title: assignment.title || '',
-  description: assignment.description || '',
-  due_date: assignment.due_date || '',
-  status: assignment.status || 'not_started',
+  description:
+    assignment.description || '',
+  due_date:
+    assignment.due_date || '',
+  status:
+    assignment.status ||
+    'not_started',
   hours:
     assignment.hours === null ||
     assignment.hours === undefined
@@ -28,11 +42,15 @@ const getEditValues = (assignment) => ({
 })
 
 const Coursework = () => {
-  const [isModalOpen, setIsModalOpen] =
-    useState(false)
+  const [
+    isModalOpen,
+    setIsModalOpen,
+  ] = useState(false)
 
-  const [editingCoursework, setEditingCoursework] =
-    useState(null)
+  const [
+    editingCoursework,
+    setEditingCoursework,
+  ] = useState(null)
 
   const {
     coursework,
@@ -47,161 +65,276 @@ const Coursework = () => {
     deleteCoursework,
   } = useCoursework()
 
-  const courseworkFields = useMemo(
-    () => getCourseworkFields(classes),
-    [classes]
-  )
+  const {
+    scheduling,
+    scheduleError,
+    unscheduledAssignments,
+    scheduleSummaryByCoursework,
+    rebuildCourseworkSchedule,
+  } =
+    useCourseworkSchedule(
+      coursework,
+    )
 
-  const classesById = useMemo(
-    () =>
-      Object.fromEntries(
-        classes.map((classItem) => [
-          classItem.id,
-          classItem,
-        ])
-      ),
-    [classes]
-  )
+  const courseworkFields =
+    useMemo(
+      () =>
+        getCourseworkFields(
+          classes,
+        ),
+      [classes],
+    )
 
-  const modalInitialValues = useMemo(() => {
-    if (!editingCoursework) {
-      return initialCourseworkValues
-    }
+  const classesById =
+    useMemo(
+      () =>
+        Object.fromEntries(
+          classes.map(
+            (classItem) => [
+              classItem.id,
+              classItem,
+            ],
+          ),
+        ),
+      [classes],
+    )
 
-    return getEditValues(editingCoursework)
-  }, [editingCoursework])
+  const modalInitialValues =
+    useMemo(() => {
+      if (!editingCoursework) {
+        return initialCourseworkValues
+      }
 
-  const handleOpenCreateModal = () => {
-    if (loading || saving) {
-      return
-    }
-
-    if (classes.length === 0) {
-      setError(
-        'Create a class before adding coursework.'
+      return getEditValues(
+        editingCoursework,
       )
-      return
+    }, [editingCoursework])
+
+  const handleOpenCreateModal =
+    () => {
+      if (loading || saving) {
+        return
+      }
+
+      if (classes.length === 0) {
+        setError(
+          'Create a class before adding coursework.',
+        )
+        return
+      }
+
+      setError(null)
+      setEditingCoursework(null)
+      setIsModalOpen(true)
     }
 
+  const handleOpenEditModal = (
+    assignment,
+  ) => {
     setError(null)
-    setEditingCoursework(null)
-    setIsModalOpen(true)
-  }
-
-  const handleOpenEditModal = (assignment) => {
-    setError(null)
-    setEditingCoursework(assignment)
+    setEditingCoursework(
+      assignment,
+    )
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
-    if (saving) {
-      return
-    }
+    if (saving) return
 
     setIsModalOpen(false)
     setEditingCoursework(null)
   }
 
-  const handleSubmit = async (formData) => {
-    if (editingCoursework) {
-      await updateCoursework(
-        editingCoursework.id,
-        formData
-      )
-    } else {
-      await createCoursework(formData)
-    }
-
-    setIsModalOpen(false)
-    setEditingCoursework(null)
-  }
-
-  const handleDelete = async (assignment) => {
-    const confirmed = window.confirm(
-      `Delete "${assignment.title}"? This cannot be undone.`
-    )
-
-    if (!confirmed) {
-      return
-    }
-
-    try {
-      await deleteCoursework(assignment.id)
-
-      if (
-        editingCoursework?.id === assignment.id
-      ) {
-        setIsModalOpen(false)
-        setEditingCoursework(null)
+  const handleSubmit =
+    async (formData) => {
+      if (editingCoursework) {
+        await updateCoursework(
+          editingCoursework.id,
+          formData,
+        )
+      } else {
+        await createCoursework(
+          formData,
+        )
       }
-    } catch {
-      // Error is handled by the hook.
+
+      setIsModalOpen(false)
+      setEditingCoursework(null)
     }
-  }
+
+  const handleDelete =
+    async (assignment) => {
+      const confirmed =
+        window.confirm(
+          `Delete "${assignment.title}"? This cannot be undone.`,
+        )
+
+      if (!confirmed) return
+
+      try {
+        await deleteCoursework(
+          assignment.id,
+        )
+      } catch {
+        // Hook handles the error.
+      }
+    }
+
+  const handleRebuildSchedule =
+    async () => {
+      try {
+        await rebuildCourseworkSchedule()
+      } catch {
+        // Hook handles the error.
+      }
+    }
+
+  const displayedError =
+    error || scheduleError
 
   return (
     <div>
       <HeaderSection
         eyebrow="Coursework"
         title="Your Coursework"
-        description="Keep on track with your coursework in one place."
+        description="Track assignments and automatically plan study sessions around your timetable."
         buttonText={
           loading
             ? 'Loading Coursework...'
             : 'Add Coursework'
         }
-        onButtonClick={handleOpenCreateModal}
+        onButtonClick={
+          handleOpenCreateModal
+        }
       />
 
-      {error && (
-        <div className="mx-auto mt-6 max-w-8xl px-4">
-          <div className="rounded-xl border border-(--error-border) bg-(--error-bg) px-4 py-3">
-            <p className="text-sm font-medium text-(--error-text)">
-              {error}
+      <main className="mx-auto max-w-8xl px-4 py-8">
+        <div className="mb-6 flex flex-col gap-3 rounded-3xl border border-(--border) bg-(--bg-card) p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text-muted)">
+              Smart planning
             </p>
-          </div>
-        </div>
-      )}
 
-      <section className="mx-auto grid max-w-8xl gap-5 px-4 py-8 sm:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-          <p className="col-span-full text-sm text-(--text-muted)">
-            Loading coursework...
-          </p>
-        ) : coursework.length === 0 ? (
-          <div className="col-span-full rounded-3xl border border-dashed border-(--border) bg-(--bg-card) px-6 py-14 text-center">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-(--color-primary)/10 text-(--color-primary)">
-              <LuBookOpen size={22} />
-            </div>
-
-            <h2 className="mt-4 text-lg font-bold text-(--text-primary)">
-              No coursework yet
+            <h2 className="mt-1 text-lg font-bold text-(--text-primary)">
+              Build your coursework schedule
             </h2>
 
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-(--text-muted)">
-              Add your first assignment and start
-              tracking deadlines, progress, and grades.
+            <p className="mt-1 text-sm text-(--text-muted)">
+              Sessions are placed around lectures and existing timetable events.
             </p>
           </div>
-        ) : (
-          coursework.map((assignment) => (
-            <CourseworkCard
-              key={assignment.id}
-              assignment={assignment}
-              linkedClass={
-                classesById[assignment.class_id]
-              }
-              saving={saving}
-              isDeleting={
-                deletingId === assignment.id
-              }
-              onEdit={handleOpenEditModal}
-              onDelete={handleDelete}
+
+          <button
+            type="button"
+            onClick={
+              handleRebuildSchedule
+            }
+            disabled={
+              scheduling ||
+              loading ||
+              coursework.length === 0
+            }
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-(--color-primary) px-4 py-3 text-sm font-bold text-(--text-light) disabled:bg-(--disabled)"
+          >
+            <LuCalendarClock
+              size={18}
             />
-          ))
+
+            {scheduling
+              ? 'Scheduling...'
+              : 'Rebuild Schedule'}
+          </button>
+        </div>
+
+        {displayedError && (
+          <div className="mb-6 rounded-xl border border-(--error-border) bg-(--error-bg) px-4 py-3">
+            <p className="text-sm font-medium text-(--error-text)">
+              {displayedError}
+            </p>
+          </div>
         )}
-      </section>
+
+        {unscheduledAssignments.length >
+          0 && (
+          <div className="mb-6 rounded-xl border border-(--border-accent) bg-(--bg-card) px-4 py-3">
+            <p className="text-sm font-bold text-(--text-primary)">
+              Some work could not fit before its deadline.
+            </p>
+
+            <p className="mt-1 text-sm text-(--text-muted)">
+              {unscheduledAssignments
+                .map(
+                  (item) =>
+                    `${item.title} (${Math.ceil(
+                      item.remainingMinutes /
+                        60,
+                    )}h left)`,
+                )
+                .join(', ')}
+            </p>
+          </div>
+        )}
+
+        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            <p className="col-span-full text-sm text-(--text-muted)">
+              Loading coursework...
+            </p>
+          ) : coursework.length ===
+            0 ? (
+            <div className="col-span-full rounded-3xl border border-dashed border-(--border) bg-(--bg-card) px-6 py-14 text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-(--bg-input) text-(--color-primary)">
+                <LuBookOpen
+                  size={22}
+                />
+              </div>
+
+              <h2 className="mt-4 text-lg font-bold text-(--text-primary)">
+                No coursework yet
+              </h2>
+
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-(--text-muted)">
+                Add an assignment with a due date and estimated hours to generate a study plan.
+              </p>
+            </div>
+          ) : (
+            coursework.map(
+              (assignment) => (
+                <CourseworkCard
+                  key={
+                    assignment.id
+                  }
+                  assignment={
+                    assignment
+                  }
+                  linkedClass={
+                    classesById[
+                      assignment
+                        .class_id
+                    ]
+                  }
+                  scheduleSummary={
+                    scheduleSummaryByCoursework[
+                      assignment.id
+                    ]
+                  }
+                  saving={saving}
+                  isDeleting={
+                    deletingId ===
+                    assignment.id
+                  }
+                  onEdit={
+                    handleOpenEditModal
+                  }
+                  onDelete={
+                    handleDelete
+                  }
+                />
+              ),
+            )
+          )}
+        </section>
+      </main>
 
       <FormModal
         key={
@@ -215,8 +348,12 @@ const Coursework = () => {
             ? 'Edit Assignment'
             : 'Add Assignment'
         }
-        fields={courseworkFields}
-        initialValues={modalInitialValues}
+        fields={
+          courseworkFields
+        }
+        initialValues={
+          modalInitialValues
+        }
         onSubmit={handleSubmit}
         onClose={handleCloseModal}
       />

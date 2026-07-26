@@ -195,7 +195,7 @@ const FlashcardSet = () => {
         ← Back to flashcards
       </Link>
 
-      <header className="mt-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+      <header className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="flex items-start gap-4">
           <div
             className="mt-1 h-14 w-2 rounded-full"

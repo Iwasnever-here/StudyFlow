@@ -20,7 +20,7 @@ function MainLayout() {
       <Sidebar />
 
       <main
-        className=" mt-5 pt-16 md:pt-0 md:ml-72 min-h-screen p-4 sm:p-6 lg:p-8
+        className=" mt-0 pt-16 md:pt-0 md:ml-72 min-h-screen p-4 sm:p-6 lg:p-8
         "
       >
         <Outlet />

@@ -295,7 +295,7 @@ const ClassDetails = () => {
         ← Back to classes
       </Link>
 
-      <header className="mt-6 flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+      <header className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
         <div className="flex items-start gap-4">
           <div
             className="mt-1 h-16 w-2 rounded-full"
@@ -355,7 +355,7 @@ const ClassDetails = () => {
         </div>
       )}
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Current grade"
           value={
