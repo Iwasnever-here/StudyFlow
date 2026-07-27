@@ -5,6 +5,7 @@ function MainLayout() {
   return (
     <div
   className="
+  mt-5
     min-h-screen
     bg-(--bg-page)
     text-(--text-primary)
