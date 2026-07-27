@@ -583,18 +583,6 @@ const CourseworkSummaryCard = ({
         />
       </dl>
 
-      {nextAssignment && (
-        <div className="mt-5 rounded-xl border border-(--border)] bg-(--bg-input)] p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-(--text-muted)]">
-            Up next
-          </p>
-
-          <p className="mt-1 truncate text-sm font-semibold text-(--text-primary)]">
-            {nextAssignment.title}
-          </p>
-        </div>
-      )}
-
       <div className="mt-5 grid gap-2">
         <Link
           to={`/coursework?classId=${classId}`}

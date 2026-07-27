@@ -10,111 +10,230 @@ import { initialTodoFields } from '../config/todoFields'
 
 export const TODO_INITIAL_VALUES = {
   title: '',
-  priority: 'medium',
+  due_date: '',
   class_id: '',
 }
 
 const COMPLETION_DELAY = 2000
 
+const padNumber = (value) => {
+  return String(value).padStart(2, '0')
+}
+
+const formatLocalDate = (date) => {
+  const year = date.getFullYear()
+
+  const month = padNumber(
+    date.getMonth() + 1
+  )
+
+  const day = padNumber(
+    date.getDate()
+  )
+
+  return `${year}-${month}-${day}`
+}
+
+const getTodayString = () => {
+  return formatLocalDate(new Date())
+}
+
+const getEndOfWeekString = () => {
+  const today = new Date()
+
+  today.setHours(0, 0, 0, 0)
+
+  const currentDay = today.getDay()
+
+  const daysUntilSunday =
+    currentDay === 0
+      ? 0
+      : 7 - currentDay
+
+  const endOfWeek = new Date(today)
+
+  endOfWeek.setDate(
+    today.getDate() + daysUntilSunday
+  )
+
+  return formatLocalDate(endOfWeek)
+}
+
+const compareTodosByDueDate = (
+  firstTodo,
+  secondTodo
+) => {
+  const firstDueDate =
+    firstTodo?.due_date || ''
+
+  const secondDueDate =
+    secondTodo?.due_date || ''
+
+  if (!firstDueDate && !secondDueDate) {
+    return String(
+      firstTodo?.title || ''
+    ).localeCompare(
+      String(secondTodo?.title || '')
+    )
+  }
+
+  if (!firstDueDate) {
+    return 1
+  }
+
+  if (!secondDueDate) {
+    return -1
+  }
+
+  const dateComparison =
+    firstDueDate.localeCompare(
+      secondDueDate
+    )
+
+  if (dateComparison !== 0) {
+    return dateComparison
+  }
+
+  return String(
+    firstTodo?.title || ''
+  ).localeCompare(
+    String(secondTodo?.title || '')
+  )
+}
+
 const validateTodoForm = (formData) => {
   const title = formData.title?.trim()
 
   if (!title) {
-    throw new Error('Please enter a task.')
+    throw new Error(
+      'Please enter a task.'
+    )
   }
 
-  if (!formData.priority) {
-    throw new Error('Please choose a priority.')
+  if (!formData.due_date) {
+    throw new Error(
+      'Please choose a due date.'
+    )
   }
 
   return {
     title,
-    priority: formData.priority,
-    class_id: formData.class_id || null,
+    due_date: formData.due_date,
+    class_id:
+      formData.class_id || null,
   }
 }
 
 const useTodos = () => {
-  const [todos, setTodos] = useState([])
-  const [classes, setClasses] = useState([])
+  const [todos, setTodos] =
+    useState([])
 
-  const [selectedClassId, setSelectedClassId] =
-    useState('all')
+  const [classes, setClasses] =
+    useState([])
 
-  const [isModalOpen, setIsModalOpen] =
-    useState(false)
+  const [
+    selectedClassId,
+    setSelectedClassId,
+  ] = useState('all')
 
-  const [editingTodo, setEditingTodo] =
-    useState(null)
+  const [
+    isModalOpen,
+    setIsModalOpen,
+  ] = useState(false)
 
-  const [loading, setLoading] = useState(true)
+  const [
+    editingTodo,
+    setEditingTodo,
+  ] = useState(null)
+
+  const [loading, setLoading] =
+    useState(true)
+
   const [pageError, setPageError] =
     useState(null)
 
-  const getCurrentUser = useCallback(async () => {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+  const getCurrentUser =
+    useCallback(async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser()
 
-    if (error) {
-      throw error
-    }
+      if (error) {
+        throw error
+      }
 
-    if (!user) {
-      throw new Error(
-        'You must be signed in to manage your tasks.'
-      )
-    }
+      if (!user) {
+        throw new Error(
+          'You must be signed in to manage your tasks.'
+        )
+      }
 
-    return user
-  }, [])
+      return user
+    }, [])
 
-  const fetchPageData = useCallback(async () => {
-    setLoading(true)
-    setPageError(null)
+  const fetchPageData =
+    useCallback(async () => {
+      setLoading(true)
+      setPageError(null)
 
-    try {
-      const user = await getCurrentUser()
+      try {
+        const user =
+          await getCurrentUser()
 
-      const [todosResult, classesResult] =
-        await Promise.all([
+        const [
+          todosResult,
+          classesResult,
+        ] = await Promise.all([
           supabase
             .from('todos')
             .select('*')
             .eq('user_id', user.id)
+            .order('due_date', {
+              ascending: true,
+              nullsFirst: false,
+            })
             .order('created_at', {
               ascending: false,
             }),
 
           supabase
             .from('classes')
-            .select('id, name, code, color')
+            .select(
+              'id, name, code, color'
+            )
             .order('name', {
               ascending: true,
             }),
         ])
 
-      const errors = [
-        todosResult.error?.message,
-        classesResult.error?.message,
-      ].filter(Boolean)
+        const errors = [
+          todosResult.error?.message,
+          classesResult.error?.message,
+        ].filter(Boolean)
 
-      if (errors.length > 0) {
-        throw new Error(errors.join(' '))
+        if (errors.length > 0) {
+          throw new Error(
+            errors.join(' ')
+          )
+        }
+
+        setTodos(
+          todosResult.data || []
+        )
+
+        setClasses(
+          classesResult.data || []
+        )
+      } catch (error) {
+        setPageError(
+          error.message ||
+            'Unable to load your tasks.'
+        )
+      } finally {
+        setLoading(false)
       }
-
-      setTodos(todosResult.data || [])
-      setClasses(classesResult.data || [])
-    } catch (error) {
-      setPageError(
-        error.message ||
-          'Unable to load your tasks.'
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [getCurrentUser])
+    }, [getCurrentUser])
 
   useEffect(() => {
     fetchPageData()
@@ -128,7 +247,9 @@ const useTodos = () => {
   const classesById = useMemo(() => {
     return classes.reduce(
       (classMap, classItem) => {
-        classMap[classItem.id] = classItem
+        classMap[String(classItem.id)] =
+          classItem
+
         return classMap
       },
       {}
@@ -140,7 +261,10 @@ const useTodos = () => {
       return todos
     }
 
-    if (selectedClassId === 'unassigned') {
+    if (
+      selectedClassId ===
+      'unassigned'
+    ) {
       return todos.filter(
         (todo) => !todo.class_id
       )
@@ -148,50 +272,88 @@ const useTodos = () => {
 
     return todos.filter(
       (todo) =>
-        todo.class_id === selectedClassId
+        String(todo.class_id) ===
+        String(selectedClassId)
     )
   }, [todos, selectedClassId])
 
   const groupedTodos = useMemo(() => {
     const groups = {
-      low: [],
-      medium: [],
-      high: [],
+      overdue: [],
+      today: [],
+      thisWeek: [],
+      other: [],
     }
 
-    filteredTodos.forEach((todo) => {
-      const priority =
-        todo.priority?.toLowerCase()
+    const today = getTodayString()
 
-      if (groups[priority]) {
-        groups[priority].push(todo)
+    const endOfWeek =
+      getEndOfWeekString()
+
+    filteredTodos.forEach((todo) => {
+      const dueDate = todo.due_date
+
+      if (!dueDate) {
+        groups.other.push(todo)
+        return
       }
+
+      if (dueDate < today) {
+        groups.overdue.push(todo)
+        return
+      }
+
+      if (dueDate === today) {
+        groups.today.push(todo)
+        return
+      }
+
+      if (dueDate <= endOfWeek) {
+        groups.thisWeek.push(todo)
+        return
+      }
+
+      groups.other.push(todo)
     })
+
+    Object.values(groups).forEach(
+      (group) => {
+        group.sort(
+          compareTodosByDueDate
+        )
+      }
+    )
 
     return groups
   }, [filteredTodos])
 
-  const openCreateModal = useCallback(() => {
-    setEditingTodo(null)
-    setIsModalOpen(true)
-  }, [])
+  const openCreateModal =
+    useCallback(() => {
+      setEditingTodo(null)
+      setIsModalOpen(true)
+    }, [])
 
-  const openEditModal = useCallback((todo) => {
-    setEditingTodo(todo)
-    setIsModalOpen(true)
-  }, [])
+  const openEditModal =
+    useCallback((todo) => {
+      setEditingTodo(todo)
+      setIsModalOpen(true)
+    }, [])
 
-  const closeTodoModal = useCallback(() => {
-    setIsModalOpen(false)
-    setEditingTodo(null)
-  }, [])
+  const closeTodoModal =
+    useCallback(() => {
+      setIsModalOpen(false)
+      setEditingTodo(null)
+    }, [])
 
   const createTodo = useCallback(
     async (formData) => {
+      setPageError(null)
+
       const validatedTodo =
         validateTodoForm(formData)
 
-      const user = await getCurrentUser()
+      const user =
+        await getCurrentUser()
 
       const newTodo = {
         ...validatedTodo,
@@ -200,11 +362,12 @@ const useTodos = () => {
         user_id: user.id,
       }
 
-      const { data, error } = await supabase
-        .from('todos')
-        .insert(newTodo)
-        .select()
-        .single()
+      const { data, error } =
+        await supabase
+          .from('todos')
+          .insert(newTodo)
+          .select()
+          .single()
 
       if (error) {
         throw error
@@ -226,15 +389,18 @@ const useTodos = () => {
         )
       }
 
+      setPageError(null)
+
       const updates =
         validateTodoForm(formData)
 
-      const { data, error } = await supabase
-        .from('todos')
-        .update(updates)
-        .eq('id', editingTodo.id)
-        .select()
-        .single()
+      const { data, error } =
+        await supabase
+          .from('todos')
+          .update(updates)
+          .eq('id', editingTodo.id)
+          .select()
+          .single()
 
       if (error) {
         throw error
@@ -242,30 +408,43 @@ const useTodos = () => {
 
       setTodos((currentTodos) =>
         currentTodos.map((todo) =>
-          todo.id === data.id ? data : todo
+          String(todo.id) ===
+          String(data.id)
+            ? data
+            : todo
         )
       )
     },
     [editingTodo]
   )
 
-  const handleTodoSubmit = useCallback(
-    async (formData) => {
-      if (editingTodo) {
-        await updateTodo(formData)
-      } else {
-        await createTodo(formData)
-      }
+  const handleTodoSubmit =
+    useCallback(
+      async (formData) => {
+        try {
+          if (editingTodo) {
+            await updateTodo(formData)
+          } else {
+            await createTodo(formData)
+          }
 
-      closeTodoModal()
-    },
-    [
-      editingTodo,
-      updateTodo,
-      createTodo,
-      closeTodoModal,
-    ]
-  )
+          closeTodoModal()
+        } catch (error) {
+          setPageError(
+            error.message ||
+              'Unable to save the task.'
+          )
+
+          throw error
+        }
+      },
+      [
+        editingTodo,
+        updateTodo,
+        createTodo,
+        closeTodoModal,
+      ]
+    )
 
   const deleteTodo = useCallback(
     async (todo) => {
@@ -286,7 +465,8 @@ const useTodos = () => {
       setTodos((currentTodos) =>
         currentTodos.filter(
           (currentTodo) =>
-            currentTodo.id !== todo.id
+            String(currentTodo.id) !==
+            String(todo.id)
         )
       )
     },
@@ -300,7 +480,10 @@ const useTodos = () => {
       setPageError(null)
 
       await new Promise((resolve) => {
-        setTimeout(resolve, COMPLETION_DELAY)
+        setTimeout(
+          resolve,
+          COMPLETION_DELAY
+        )
       })
 
       const { error } = await supabase
@@ -316,25 +499,29 @@ const useTodos = () => {
       setTodos((currentTodos) =>
         currentTodos.filter(
           (currentTodo) =>
-            currentTodo.id !== todo.id
+            String(currentTodo.id) !==
+            String(todo.id)
         )
       )
     },
     []
   )
 
-  const modalInitialValues = useMemo(() => {
-    if (!editingTodo) {
-      return TODO_INITIAL_VALUES
-    }
+  const modalInitialValues =
+    useMemo(() => {
+      if (!editingTodo) {
+        return TODO_INITIAL_VALUES
+      }
 
-    return {
-      title: editingTodo.title || '',
-      priority:
-        editingTodo.priority || 'medium',
-      class_id: editingTodo.class_id || '',
-    }
-  }, [editingTodo])
+      return {
+        title:
+          editingTodo.title || '',
+        due_date:
+          editingTodo.due_date || '',
+        class_id:
+          editingTodo.class_id || '',
+      }
+    }, [editingTodo])
 
   return {
     todos,

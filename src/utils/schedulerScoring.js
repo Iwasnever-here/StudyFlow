@@ -6,16 +6,26 @@ import {
 
 export const SCHEDULER_CONFIG = {
   planningDays: 21,
+
   dayStartMinutes: 9 * 60,
   dayEndMinutes: 21 * 60,
+
   lunchStartMinutes: 12 * 60,
   lunchEndMinutes: 13 * 60,
-  dinnerStartMinutes: 17 * 60 + 30,
-  dinnerEndMinutes: 18 * 60 + 30,
-  minimumSessionMinutes: 30,
+
+  dinnerStartMinutes:
+    17 * 60 + 30,
+  dinnerEndMinutes:
+    18 * 60 + 30,
+
+  // Every generated coursework block
+  // must be at least one hour.
+  minimumSessionMinutes: 60,
   preferredSessionMinutes: 60,
   maximumSessionMinutes: 90,
+
   breakMinutes: 20,
+
   maximumDailyStudyMinutes: 360,
   maximumAssignmentMinutesPerDay: 240,
 }
@@ -32,11 +42,25 @@ export const getAssignmentUrgency = (
     ),
   )
 
-  if (daysUntilDue === 0) return 120
-  if (daysUntilDue === 1) return 100
-  if (daysUntilDue <= 3) return 80
-  if (daysUntilDue <= 7) return 55
-  if (daysUntilDue <= 14) return 30
+  if (daysUntilDue === 0) {
+    return 120
+  }
+
+  if (daysUntilDue === 1) {
+    return 100
+  }
+
+  if (daysUntilDue <= 3) {
+    return 80
+  }
+
+  if (daysUntilDue <= 7) {
+    return 55
+  }
+
+  if (daysUntilDue <= 14) {
+    return 30
+  }
 
   return 15
 }
@@ -52,11 +76,10 @@ export const getAssignmentPriority = (
       todayString,
     )
 
-  const workload =
-    Math.min(
-      50,
-      remainingMinutes / 30,
-    )
+  const workload = Math.min(
+    50,
+    remainingMinutes / 30,
+  )
 
   return urgency + workload
 }
@@ -91,11 +114,10 @@ export const getCandidateScore = ({
       todayString,
     )
 
-  const earlierDateBonus =
-    Math.max(
-      0,
-      40 - daysFromToday * 4,
-    )
+  const earlierDateBonus = Math.max(
+    0,
+    40 - daysFromToday * 4,
+  )
 
   const deadlineRiskPenalty =
     daysUntilDue <= 1
@@ -105,22 +127,19 @@ export const getCandidateScore = ({
         : 0
 
   const daytimeBonus =
-    candidate.startMinutes >= 10 * 60 &&
-    candidate.startMinutes <= 16 * 60
+    candidate.startMinutes >=
+      10 * 60 &&
+    candidate.startMinutes <=
+      16 * 60
       ? 18
       : 0
 
   const sameAssignmentPenalty =
-    scheduledMinutesForAssignmentDay / 10
+    scheduledMinutesForAssignmentDay /
+    10
 
   const dailyLoadPenalty =
     scheduledMinutesForDay / 15
-
-  const shortSessionPenalty =
-    candidate.duration <
-    SCHEDULER_CONFIG.preferredSessionMinutes
-      ? 8
-      : 0
 
   const remainingWorkBonus =
     Math.min(
@@ -135,8 +154,7 @@ export const getCandidateScore = ({
     remainingWorkBonus -
     deadlineRiskPenalty -
     sameAssignmentPenalty -
-    dailyLoadPenalty -
-    shortSessionPenalty
+    dailyLoadPenalty
   )
 }
 
@@ -201,6 +219,17 @@ export const getScheduledMinutes = (
     timeToMinutes(
       block.end_time,
     )
+
+  if (
+    !Number.isFinite(
+      startMinutes,
+    ) ||
+    !Number.isFinite(
+      endMinutes,
+    )
+  ) {
+    return 0
+  }
 
   return Math.max(
     0,

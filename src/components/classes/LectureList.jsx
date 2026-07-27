@@ -86,7 +86,7 @@ function LectureList({
           )}
         </div>
       ) : (
-        <div className="max-h-[292.45px] min-h-[292.45px] overflow-y-auto">
+        <div className="h-[330.45px] overflow-y-auto">
           {lectures.map((lecture) => (
             <LectureRow
               key={lecture.id}

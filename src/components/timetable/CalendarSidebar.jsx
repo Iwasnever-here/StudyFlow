@@ -89,7 +89,7 @@ const CalendarSidebar = ({
         </select>
       </section>
 
-      <section className="max-h-[235px] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+      <section className="h-[279px] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
           Today
         </p>

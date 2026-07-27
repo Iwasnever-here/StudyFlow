@@ -1,21 +1,19 @@
-export const initialTodoFields = (classes = []) => [
+export const initialTodoFields = (
+  classes = []
+) => [
   {
     name: 'title',
     label: 'Task',
     type: 'text',
-    placeholder: 'What do you need to do?',
+    placeholder:
+      'What do you need to do?',
     required: true,
   },
   {
-    name: 'priority',
-    label: 'Priority',
-    type: 'select',
+    name: 'due_date',
+    label: 'Due date',
+    type: 'date',
     required: true,
-    options: [
-      { label: 'Low', value: 'low' },
-      { label: 'Medium', value: 'medium' },
-      { label: 'High', value: 'high' },
-    ],
   },
   {
     name: 'class_id',
@@ -27,12 +25,14 @@ export const initialTodoFields = (classes = []) => [
         label: 'No class',
         value: '',
       },
-      ...classes.map((classItem) => ({
-        label: classItem.code
-          ? `${classItem.name} (${classItem.code})`
-          : classItem.name,
-        value: classItem.id,
-      })),
+      ...classes.map(
+        (classItem) => ({
+          label: classItem.code
+            ? `${classItem.name} (${classItem.code})`
+            : classItem.name,
+          value: classItem.id,
+        })
+      ),
     ],
   },
 ]

@@ -4,15 +4,21 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { supabase } from '../lib/supabaseClient'
+
+import {
+  supabase,
+} from '../lib/supabaseClient'
+
 import {
   buildCourseworkSchedule,
   getCourseworkScheduleSummary,
 } from '../utils/courseworkScheduler'
+
 import {
-  fetchCourseworkBlocks,
+  fetchAllTimeBlocks,
   replaceGeneratedCourseworkBlocks,
 } from '../services/courseworkScheduleService'
+
 import {
   formatDate,
 } from '../utils/datetime'
@@ -75,26 +81,23 @@ const useCourseworkSchedule = (
         const user =
           await getUser()
 
-        const timetableBlocks =
-          await fetchCourseworkBlocks(
+        const currentBlocks =
+          await fetchAllTimeBlocks(
             user.id,
           )
 
         setBlocks(
-          Array.isArray(
-            timetableBlocks,
-          )
-            ? timetableBlocks
-            : [],
+          currentBlocks,
         )
 
-        return timetableBlocks
+        return currentBlocks
       } catch (error) {
-        setScheduleError(
-          error.message,
-        )
-
         setBlocks([])
+
+        setScheduleError(
+          error.message ||
+            'Unable to load the coursework schedule.',
+        )
 
         throw error
       } finally {
@@ -113,9 +116,14 @@ const useCourseworkSchedule = (
       return getCourseworkScheduleSummary({
         assignments:
           assignments || [],
-        blocks: blocks || [],
+
+        blocks:
+          blocks || [],
       })
-    }, [assignments, blocks])
+    }, [
+      assignments,
+      blocks,
+    ])
 
   const rebuildCourseworkSchedule =
     useCallback(async () => {
@@ -127,43 +135,45 @@ const useCourseworkSchedule = (
         const user =
           await getUser()
 
-        /*
-         * Always fetch fresh blocks first.
-         * This prevents scheduling against
-         * stale page state.
-         */
         const currentBlocks =
-          await fetchCourseworkBlocks(
+          await fetchAllTimeBlocks(
             user.id,
           )
 
+      
         const result =
           buildCourseworkSchedule({
-            assignments,
+            assignments:
+              assignments || [],
+
             existingBlocks:
               currentBlocks,
-            userId: user.id,
+
+            userId:
+              user.id,
           })
 
         await replaceGeneratedCourseworkBlocks({
-          userId: user.id,
+          userId:
+            user.id,
+
           fromDate:
-            formatDate(new Date()),
+            formatDate(
+              new Date(),
+            ),
+
           blocks:
-            result.generatedBlocks,
+            result.generatedBlocks ||
+            [],
         })
 
-        /*
-         * Re-fetch from Supabase rather
-         * than guessing what was saved.
-         */
         const refreshedBlocks =
-          await fetchCourseworkBlocks(
+          await fetchAllTimeBlocks(
             user.id,
           )
 
         setBlocks(
-          refreshedBlocks || [],
+          refreshedBlocks,
         )
 
         setUnscheduledAssignments(
@@ -173,12 +183,14 @@ const useCourseworkSchedule = (
 
         return {
           ...result,
+
           savedBlocks:
             refreshedBlocks,
         }
       } catch (error) {
         setScheduleError(
-          error.message,
+          error.message ||
+            'Unable to rebuild the coursework schedule.',
         )
 
         throw error

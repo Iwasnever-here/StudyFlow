@@ -35,7 +35,7 @@ const Todo = () => {
       <HeaderSection
         eyebrow="Todo"
         title="Your Todo List"
-        description="Organise tasks by priority and class."
+        description="Organise tasks by their due dates."
         buttonText="Add Task"
         onButtonClick={openCreateModal}
       />
@@ -56,7 +56,7 @@ const Todo = () => {
                 text-(--text-primary)
               "
             >
-              Priority board
+              Deadline board
             </p>
 
             <p
@@ -76,7 +76,8 @@ const Todo = () => {
             <label
               htmlFor="todo-class-filter"
               className="
-                mb-2 block text-xs font-semibold
+                mb-2 block
+                text-xs font-semibold
                 uppercase tracking-[0.12em]
                 text-(--text-muted)
               "
@@ -170,13 +171,14 @@ const Todo = () => {
           <div
             className="
               grid items-start gap-5
-              lg:grid-cols-3
+              md:grid-cols-2
+              xl:grid-cols-4
             "
           >
             <TodoColumn
-              title="Low Priority"
-              priority="low"
-              todos={groupedTodos.low}
+              title="Overdue"
+              group="overdue"
+              todos={groupedTodos.overdue}
               classesById={classesById}
               onComplete={completeTodo}
               onEdit={openEditModal}
@@ -184,9 +186,9 @@ const Todo = () => {
             />
 
             <TodoColumn
-              title="Medium Priority"
-              priority="medium"
-              todos={groupedTodos.medium}
+              title="Today"
+              group="today"
+              todos={groupedTodos.today}
               classesById={classesById}
               onComplete={completeTodo}
               onEdit={openEditModal}
@@ -194,9 +196,19 @@ const Todo = () => {
             />
 
             <TodoColumn
-              title="High Priority"
-              priority="high"
-              todos={groupedTodos.high}
+              title="This Week"
+              group="thisWeek"
+              todos={groupedTodos.thisWeek}
+              classesById={classesById}
+              onComplete={completeTodo}
+              onEdit={openEditModal}
+              onDelete={deleteTodo}
+            />
+
+            <TodoColumn
+              title="Other"
+              group="other"
+              todos={groupedTodos.other}
               classesById={classesById}
               onComplete={completeTodo}
               onEdit={openEditModal}

@@ -6,12 +6,108 @@ import {
 
 import {
   LuBookOpen,
+  LuCalendarDays,
   LuCheck,
   LuCircle,
   LuEllipsis,
   LuPencil,
   LuTrash2,
 } from 'react-icons/lu'
+
+const padNumber = (value) => {
+  return String(value).padStart(2, '0')
+}
+
+const getTodayString = () => {
+  const today = new Date()
+
+  const year = today.getFullYear()
+
+  const month = padNumber(
+    today.getMonth() + 1
+  )
+
+  const day = padNumber(
+    today.getDate()
+  )
+
+  return `${year}-${month}-${day}`
+}
+
+const parseDateString = (dateString) => {
+  if (!dateString) {
+    return null
+  }
+
+  const [year, month, day] =
+    dateString.split('-').map(Number)
+
+  if (!year || !month || !day) {
+    return null
+  }
+
+  return new Date(
+    year,
+    month - 1,
+    day
+  )
+}
+
+const formatDueDate = (dueDate) => {
+  const parsedDate =
+    parseDateString(dueDate)
+
+  if (!parsedDate) {
+    return 'No due date'
+  }
+
+  return new Intl.DateTimeFormat(
+    'en-GB',
+    {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }
+  ).format(parsedDate)
+}
+
+const getDueDateDisplay = (
+  dueDate
+) => {
+  if (!dueDate) {
+    return {
+      label: 'No due date',
+      className:
+        'bg-(--bg-input) text-(--text-muted)',
+    }
+  }
+
+  const today = getTodayString()
+
+  if (dueDate < today) {
+    return {
+      label: `Overdue · ${formatDueDate(
+        dueDate
+      )}`,
+      className:
+        'bg-red-500/10 text-red-700',
+    }
+  }
+
+  if (dueDate === today) {
+    return {
+      label: 'Due today',
+      className:
+        'bg-amber-500/10 text-amber-700',
+    }
+  }
+
+  return {
+    label: formatDueDate(dueDate),
+    className:
+      'bg-(--bg-input) text-(--text-secondary)',
+  }
+}
 
 const TodoCard = ({
   todo,
@@ -20,19 +116,27 @@ const TodoCard = ({
   onEdit,
   onDelete,
 }) => {
-  const [isCompleting, setIsCompleting] =
-    useState(false)
+  const [
+    isCompleting,
+    setIsCompleting,
+  ] = useState(false)
 
-  const [isMenuOpen, setIsMenuOpen] =
-    useState(false)
+  const [
+    isMenuOpen,
+    setIsMenuOpen,
+  ] = useState(false)
 
   const menuRef = useRef(null)
 
   useEffect(() => {
-    const handleOutsideClick = (event) => {
+    const handleOutsideClick = (
+      event
+    ) => {
       if (
         menuRef.current &&
-        !menuRef.current.contains(event.target)
+        !menuRef.current.contains(
+          event.target
+        )
       ) {
         setIsMenuOpen(false)
       }
@@ -51,10 +155,17 @@ const TodoCard = ({
     }
   }, [])
 
-  if (!todo) return null
+  if (!todo) {
+    return null
+  }
+
+  const dueDateDisplay =
+    getDueDateDisplay(todo.due_date)
 
   const handleComplete = async () => {
-    if (isCompleting) return
+    if (isCompleting) {
+      return
+    }
 
     setIsMenuOpen(false)
     setIsCompleting(true)
@@ -103,9 +214,9 @@ const TodoCard = ({
           onClick={handleComplete}
           aria-label={`Complete ${todo.title}`}
           className="
-            mt-0.5 flex h-7 w-7 shrink-0
-            items-center justify-center
-            rounded-full
+            mt-0.5 flex h-7 w-7
+            shrink-0 items-center
+            justify-center rounded-full
             text-(--color-primary)
             transition
             hover:bg-(--color-primary)/10
@@ -118,7 +229,8 @@ const TodoCard = ({
           {isCompleting ? (
             <span
               className="
-                flex h-6 w-6 items-center justify-center
+                flex h-6 w-6
+                items-center justify-center
                 rounded-full
                 bg-(--color-primary)
                 text-white
@@ -151,12 +263,36 @@ const TodoCard = ({
             {todo.title}
           </h3>
 
+          <div className="mt-3">
+            <span
+              className={`
+                inline-flex items-center
+                gap-1.5 rounded-lg
+                px-2.5 py-1.5
+                text-xs font-semibold
+                ${dueDateDisplay.className}
+              `}
+            >
+              <LuCalendarDays
+                size={13}
+              />
+
+              {dueDateDisplay.label}
+            </span>
+          </div>
+
           {classItem && (
-            <div className="mt-3 flex items-center gap-2">
+            <div
+              className="
+                mt-3 flex items-center
+                gap-2
+              "
+            >
               <span
                 className="
-                  flex h-7 w-7 shrink-0
-                  items-center justify-center
+                  flex h-7 w-7
+                  shrink-0 items-center
+                  justify-center
                   rounded-lg
                 "
                 style={{
@@ -164,7 +300,8 @@ const TodoCard = ({
                     `${classItem.color || '#26371f'}20`,
 
                   color:
-                    classItem.color || '#26371f',
+                    classItem.color ||
+                    '#26371f',
                 }}
               >
                 <LuBookOpen size={14} />
@@ -173,7 +310,8 @@ const TodoCard = ({
               <div className="min-w-0">
                 <p
                   className="
-                    truncate text-xs font-medium
+                    truncate text-xs
+                    font-medium
                     text-(--text-secondary)
                   "
                 >
@@ -204,14 +342,16 @@ const TodoCard = ({
             disabled={isCompleting}
             onClick={() =>
               setIsMenuOpen(
-                (currentValue) => !currentValue
+                (currentValue) =>
+                  !currentValue
               )
             }
             aria-label={`Actions for ${todo.title}`}
             aria-expanded={isMenuOpen}
             className="
-              flex h-8 w-8 items-center
-              justify-center rounded-lg
+              flex h-8 w-8
+              items-center justify-center
+              rounded-lg
               text-(--text-muted)
               transition
               hover:bg-(--bg-input)
@@ -228,22 +368,25 @@ const TodoCard = ({
           {isMenuOpen && (
             <div
               className="
-                absolute right-0 top-10 z-20
-                w-36 overflow-hidden
+                absolute right-0 top-10
+                z-20 w-36
+                overflow-hidden
                 rounded-xl
                 border border-(--border)
                 bg-(--bg-card)
-                p-1.5
-                shadow-lg
+                p-1.5 shadow-lg
               "
             >
               <button
                 type="button"
                 onClick={handleEdit}
                 className="
-                  flex w-full items-center gap-2
-                  rounded-lg px-3 py-2
-                  text-left text-sm font-medium
+                  flex w-full
+                  items-center gap-2
+                  rounded-lg
+                  px-3 py-2
+                  text-left text-sm
+                  font-medium
                   text-(--text-primary)
                   transition
                   hover:bg-(--bg-input)
@@ -257,9 +400,12 @@ const TodoCard = ({
                 type="button"
                 onClick={handleDelete}
                 className="
-                  flex w-full items-center gap-2
-                  rounded-lg px-3 py-2
-                  text-left text-sm font-medium
+                  flex w-full
+                  items-center gap-2
+                  rounded-lg
+                  px-3 py-2
+                  text-left text-sm
+                  font-medium
                   text-(--error-text)
                   transition
                   hover:bg-(--error-bg)

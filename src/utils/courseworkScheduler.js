@@ -1,12 +1,13 @@
 import {
   minutesToTime,
 } from './datetime'
+
 import {
-  SCHEDULER_CONFIG,
   getScheduledMinutes,
   getTodayString,
   sortAssignmentsForScheduling,
 } from './schedulerScoring'
+
 import {
   findBestCandidate,
 } from './schedulerCandidates'
@@ -18,13 +19,53 @@ const sameId = (
   String(firstId) ===
   String(secondId)
 
+const normaliseText = (
+  value,
+) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+
 const isCompleted = (
   assignment,
 ) =>
-  String(
-    assignment?.status || '',
-  ).toLowerCase() ===
-  'completed'
+  normaliseText(
+    assignment?.status,
+  ) === 'completed'
+
+const isGeneratedCourseworkBlock = (
+  block,
+) => {
+  return (
+    block?.auto_generated ===
+      true &&
+    normaliseText(
+      block?.block_type,
+    ) === 'coursework'
+  )
+}
+
+const getFixedExistingBlocks = (
+  blocks = [],
+) => {
+  /*
+   * Remove only old generated
+   * coursework sessions.
+   *
+   * Keep:
+   * - generated lectures
+   * - manual coursework
+   * - personal events
+   * - any other timetable events
+   */
+  return blocks.filter(
+    (block) =>
+      block &&
+      !isGeneratedCourseworkBlock(
+        block,
+      ),
+  )
+}
 
 const getEstimatedMinutes = (
   assignment,
@@ -45,6 +86,30 @@ const getEstimatedMinutes = (
   )
 }
 
+const getManualScheduledMinutes = ({
+  assignment,
+  existingBlocks,
+}) => {
+  return existingBlocks
+    .filter(
+      (block) =>
+        block &&
+        sameId(
+          block.coursework_id,
+          assignment.id,
+        ) &&
+        !block.auto_generated,
+    )
+    .reduce(
+      (total, block) =>
+        total +
+        getScheduledMinutes(
+          block,
+        ),
+      0,
+    )
+}
+
 const getRequiredMinutes = (
   assignment,
   existingBlocks,
@@ -55,27 +120,71 @@ const getRequiredMinutes = (
     )
 
   const manuallyScheduledMinutes =
-    existingBlocks
-      .filter(
-        (block) =>
-          sameId(
-            block?.coursework_id,
-            assignment.id,
-          ) &&
-          !block?.auto_generated,
-      )
-      .reduce(
-        (total, block) =>
-          total +
-          getScheduledMinutes(block),
-        0,
-      )
+    getManualScheduledMinutes({
+      assignment,
+      existingBlocks,
+    })
 
   return Math.max(
     0,
     estimatedMinutes -
       manuallyScheduledMinutes,
   )
+}
+
+const createGeneratedBlock = ({
+  assignment,
+  candidate,
+  userId,
+}) => {
+  return {
+    user_id:
+      userId,
+
+    class_id:
+      assignment.class_id ||
+      null,
+
+    coursework_id:
+      assignment.id,
+
+    lecture_id:
+      null,
+
+    title:
+      `Study: ${assignment.title}`,
+
+    block_date:
+      candidate.date,
+
+    start_time:
+      minutesToTime(
+        candidate.startMinutes,
+      ),
+
+    end_time:
+      minutesToTime(
+        candidate.endMinutes,
+      ),
+
+    block_type:
+      'Coursework',
+
+    is_recurring:
+      false,
+
+    recurrence_type:
+      'none',
+
+    recurrence_end_date:
+      null,
+
+    auto_generated:
+      true,
+
+    completed:
+      false,
+  }
 }
 
 export const buildCourseworkSchedule = ({
@@ -86,6 +195,18 @@ export const buildCourseworkSchedule = ({
   const todayString =
     getTodayString()
 
+  /*
+   * These blocks permanently occupy
+   * timetable space during this rebuild.
+   *
+   * Auto-generated lectures remain here.
+   * Only old generated coursework is removed.
+   */
+  const fixedExistingBlocks =
+    getFixedExistingBlocks(
+      existingBlocks,
+    )
+
   const activeAssignments =
     assignments.filter(
       (assignment) =>
@@ -95,7 +216,7 @@ export const buildCourseworkSchedule = ({
         getEstimatedMinutes(
           assignment,
         ) > 0 &&
-        assignment.due_date >
+        assignment.due_date >=
           todayString,
     )
 
@@ -104,6 +225,7 @@ export const buildCourseworkSchedule = ({
       activeAssignments.map(
         (assignment) => [
           assignment.id,
+
           getRequiredMinutes(
             assignment,
             existingBlocks,
@@ -113,6 +235,7 @@ export const buildCourseworkSchedule = ({
     )
 
   const generatedBlocks = []
+
   const blockedAssignments =
     new Set()
 
@@ -123,14 +246,14 @@ export const buildCourseworkSchedule = ({
           (assignment) =>
             remainingMinutesById[
               assignment.id
-            ] >=
-              SCHEDULER_CONFIG
-                .minimumSessionMinutes &&
+            ] > 0 &&
             !blockedAssignments.has(
               assignment.id,
             ),
         ),
+
         remainingMinutesById,
+
         todayString,
       )
 
@@ -141,22 +264,29 @@ export const buildCourseworkSchedule = ({
       break
     }
 
+    /*
+     * All fixed events plus blocks generated
+     * during this rebuild are collision blockers.
+     *
+     * This includes lectures even when
+     * auto_generated is true.
+     */
     const allBlocks = [
-      ...existingBlocks.filter(
-        (block) =>
-          !block?.auto_generated,
-      ),
+      ...fixedExistingBlocks,
       ...generatedBlocks,
     ]
+
+    const remainingMinutes =
+      remainingMinutesById[
+        assignment.id
+      ]
 
     const candidate =
       findBestCandidate({
         assignment,
-        remainingMinutes:
-          remainingMinutesById[
-            assignment.id
-          ],
-        blocks: allBlocks,
+        remainingMinutes,
+        blocks:
+          allBlocks,
         todayString,
       })
 
@@ -164,43 +294,52 @@ export const buildCourseworkSchedule = ({
       blockedAssignments.add(
         assignment.id,
       )
+
       continue
     }
 
-    generatedBlocks.push({
-      user_id: userId,
-      class_id:
-        assignment.class_id ||
-        null,
-      coursework_id:
-        assignment.id,
-      lecture_id: null,
-      title: assignment.title,
-      block_date:
-        candidate.date,
-      start_time:
-        minutesToTime(
-          candidate.startMinutes,
-        ),
-      end_time:
-        minutesToTime(
-          candidate.endMinutes,
-        ),
-      block_type: 'Coursework',
-      is_recurring: false,
-      recurrence_type: 'none',
-      recurrence_end_date: null,
-      auto_generated: true,
-      completed: false,
-    })
+    const duration =
+      Number(
+        candidate.duration,
+      )
 
+    if (
+      !Number.isFinite(duration) ||
+      duration <= 0
+    ) {
+      blockedAssignments.add(
+        assignment.id,
+      )
+
+      continue
+    }
+
+    const generatedBlock =
+      createGeneratedBlock({
+        assignment,
+        candidate,
+        userId,
+      })
+
+    generatedBlocks.push(
+      generatedBlock,
+    )
+
+    /*
+     * A final session may be longer than
+     * the remaining estimate.
+     *
+     * Example:
+     * remaining = 30
+     * duration = 60
+     * result = 0
+     */
     remainingMinutesById[
       assignment.id
     ] = Math.max(
       0,
-      remainingMinutesById[
-        assignment.id
-      ] - candidate.duration,
+      remainingMinutes -
+        duration,
     )
   }
 
@@ -212,14 +351,20 @@ export const buildCourseworkSchedule = ({
             assignment.id
           ] > 0,
       )
-      .map((assignment) => ({
-        id: assignment.id,
-        title: assignment.title,
-        remainingMinutes:
-          remainingMinutesById[
-            assignment.id
-          ],
-      }))
+      .map(
+        (assignment) => ({
+          id:
+            assignment.id,
+
+          title:
+            assignment.title,
+
+          remainingMinutes:
+            remainingMinutesById[
+              assignment.id
+            ],
+        }),
+      )
 
   return {
     generatedBlocks,
@@ -248,11 +393,15 @@ export const getCourseworkScheduleSummary = ({
                   block.coursework_id,
                   assignment.id,
                 ) &&
+                block.block_date &&
                 block.start_time &&
                 block.end_time,
             )
             .sort(
-              (first, second) =>
+              (
+                first,
+                second,
+              ) =>
                 `${first.block_date}${first.start_time}`.localeCompare(
                   `${second.block_date}${second.start_time}`,
                 ),
@@ -260,7 +409,10 @@ export const getCourseworkScheduleSummary = ({
 
         const scheduledMinutes =
           assignmentBlocks.reduce(
-            (total, block) =>
+            (
+              total,
+              block,
+            ) =>
               total +
               getScheduledMinutes(
                 block,
@@ -282,22 +434,35 @@ export const getCourseworkScheduleSummary = ({
 
         return [
           assignment.id,
+
           {
             scheduledMinutes,
             estimatedMinutes,
+
             remainingMinutes:
               Math.max(
                 0,
                 estimatedMinutes -
                   scheduledMinutes,
               ),
+
             nextSession,
+
             sessionCount:
               assignmentBlocks.length,
+
             fullyScheduled:
-              estimatedMinutes > 0 &&
+              estimatedMinutes >
+                0 &&
               scheduledMinutes >=
                 estimatedMinutes,
+
+            overScheduledMinutes:
+              Math.max(
+                0,
+                scheduledMinutes -
+                  estimatedMinutes,
+              ),
           },
         ]
       }),
