@@ -6,41 +6,29 @@ import {
 } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import {
-  getNextLecture,
+  getAuthenticatedUser,
+  getErrorMessage,
+} from './hookUtils'
+import {
+  getLectureCollections,
+  hasCompleteTimeBlock,
+  mergeLecturesWithBlocks,
+  mergeLectureWithBlock,
+  prepareLectureValues,
   sortLectures,
-} from '../utils/lectureSchedule'
-
-const LECTURE_FIELDS = `
-  id,
-  user_id,
-  class_id,
-  title,
-  lecture_url,
-  week_number,
-  estimated_minutes,
-  completed,
-  completed_at,
-  created_at
-`
-
-const TIME_BLOCK_FIELDS = `
-  id,
-  user_id,
-  class_id,
-  coursework_id,
-  title,
-  block_date,
-  start_time,
-  end_time,
-  block_type,
-  is_recurring,
-  recurrence_type,
-  recurrence_end_date,
-  auto_generated,
-  lecture_id,
-  completed,
-  created_at
-`
+} from './lectureHelpers'
+import {
+  deleteLectureBlockById,
+  deleteLectureBlocks,
+  deleteLectureRecord,
+  fetchLectureRecords,
+  insertLectureBlock,
+  insertLectureRecord,
+  updateLectureBlock,
+  updateLectureBlockCompletion,
+  updateLectureCompletion,
+  updateLectureRecord,
+} from './lectureService'
 
 const useClassLectures = (
   classId,
@@ -52,59 +40,24 @@ const useClassLectures = (
   )
   const [error, setError] = useState(null)
 
-  const getCurrentUser = useCallback(async () => {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      throw userError
-    }
-
-    if (!user) {
-      throw new Error(
+  const getCurrentUser = useCallback(
+    () =>
+      getAuthenticatedUser(
+        supabase,
         'You must be signed in to manage lectures.',
-      )
-    }
-
-    return user
-  }, [])
-
-  const handleError = useCallback(
-    (caughtError) => {
-      const message =
-        caughtError?.message ||
-        'Something went wrong while managing lectures.'
-
-      setError(message)
-      return caughtError
-    },
+      ),
     [],
   )
 
-  const mergeLecturesWithBlocks = useCallback(
-    (lectureRows, blockRows) => {
-      const blocksByLectureId = new Map(
-        (blockRows || [])
-          .filter((block) => block.lecture_id)
-          .map((block) => [
-            block.lecture_id,
-            block,
-          ]),
+  const handleError = useCallback(
+    (caughtError) => {
+      const message = getErrorMessage(
+        caughtError,
+        'Something went wrong while managing lectures.',
       )
 
-      const mergedLectures = (
-        lectureRows || []
-      ).map((lecture) => ({
-        ...lecture,
-        timeBlock:
-          blocksByLectureId.get(
-            lecture.id,
-          ) || null,
-      }))
-
-      return sortLectures(mergedLectures)
+      setError(message)
+      return caughtError
     },
     [],
   )
@@ -122,46 +75,16 @@ const useClassLectures = (
 
     try {
       const user = await getCurrentUser()
-
-      const [
-        lecturesResult,
-        blocksResult,
-      ] = await Promise.all([
-        supabase
-          .from('lectures')
-          .select(LECTURE_FIELDS)
-          .eq('user_id', user.id)
-          .eq('class_id', classId)
-          .order('week_number', {
-            ascending: true,
-          }),
-
-        supabase
-          .from('time_blocks')
-          .select(TIME_BLOCK_FIELDS)
-          .eq('user_id', user.id)
-          .eq('class_id', classId)
-          .eq('block_type', 'Lecture')
-          .order('block_date', {
-            ascending: true,
-          })
-          .order('start_time', {
-            ascending: true,
-          }),
-      ])
-
-      if (lecturesResult.error) {
-        throw lecturesResult.error
-      }
-
-      if (blocksResult.error) {
-        throw blocksResult.error
-      }
+      const records = await fetchLectureRecords({
+        supabase,
+        userId: user.id,
+        classId,
+      })
 
       const mergedLectures =
         mergeLecturesWithBlocks(
-          lecturesResult.data,
-          blocksResult.data,
+          records.lectures,
+          records.blocks,
         )
 
       setLectures(mergedLectures)
@@ -177,7 +100,6 @@ const useClassLectures = (
     classId,
     getCurrentUser,
     handleError,
-    mergeLecturesWithBlocks,
   ])
 
   useEffect(() => {
@@ -205,119 +127,60 @@ const useClassLectures = (
 
       try {
         const user = await getCurrentUser()
+        const values = prepareLectureValues(
+          formData,
+          90,
+        )
 
-        const title = formData.title?.trim()
-
-        if (!title) {
-          throw new Error(
-            'Please enter a lecture title.',
-          )
-        }
-
-        const weekNumber =
-          formData.week_number === '' ||
-          formData.week_number === null ||
-          formData.week_number === undefined
-            ? null
-            : Number(formData.week_number)
-
-        if (
-          weekNumber !== null &&
-          (
-            Number.isNaN(weekNumber) ||
-            weekNumber < 1
-          )
-        ) {
-          throw new Error(
-            'Week number must be at least 1.',
-          )
-        }
-
-        const {
-          data: createdLecture,
-          error: lectureError,
-        } = await supabase
-          .from('lectures')
-          .insert({
-            user_id: user.id,
-            class_id: classId,
-            title,
-            lecture_url:
-              formData.lecture_url?.trim() ||
-              null,
-            week_number: weekNumber,
-            estimated_minutes:
-              formData.estimated_minutes === '' ||
-              formData.estimated_minutes === null ||
-              formData.estimated_minutes === undefined
-                ? 90
-                : Number(
-                    formData.estimated_minutes,
-                  ),
-            completed: false,
-            completed_at: null,
+        const createdLecture =
+          await insertLectureRecord({
+            supabase,
+            userId: user.id,
+            classId,
+            title: values.title,
+            lectureUrl: values.lectureUrl,
+            weekNumber: values.weekNumber,
+            estimatedMinutes:
+              values.estimatedMinutes,
           })
-          .select(LECTURE_FIELDS)
-          .single()
-
-        if (lectureError) {
-          throw lectureError
-        }
-
-        const hasCompleteTimeBlock =
-          formData.block_date &&
-          formData.start_time &&
-          formData.end_time
 
         let createdBlock = null
 
-        if (hasCompleteTimeBlock) {
-          const {
-            data: blockData,
-            error: blockError,
-          } = await supabase
-            .from('time_blocks')
-            .insert({
-              user_id: user.id,
-              class_id: classId,
-              coursework_id: null,
-              title,
-              block_date:
-                formData.block_date,
-              start_time:
-                formData.start_time,
-              end_time: formData.end_time,
-              block_type: 'Lecture',
-              is_recurring: false,
-              recurrence_type: 'none',
-              recurrence_end_date: null,
-              auto_generated:
-                formData.auto_generated ||
-                false,
-              lecture_id:
-                createdLecture.id,
-              completed: false,
-            })
-            .select(TIME_BLOCK_FIELDS)
-            .single()
-
-          if (blockError) {
-            await supabase
-              .from('lectures')
-              .delete()
-              .eq('id', createdLecture.id)
-              .eq('user_id', user.id)
+        if (hasCompleteTimeBlock(formData)) {
+          try {
+            createdBlock =
+              await insertLectureBlock({
+                supabase,
+                userId: user.id,
+                classId,
+                lectureId: createdLecture.id,
+                title: values.title,
+                formData,
+                completed: false,
+                autoGenerated:
+                  formData.auto_generated ||
+                  false,
+              })
+          } catch (blockError) {
+            try {
+              await deleteLectureRecord({
+                supabase,
+                userId: user.id,
+                lectureId: createdLecture.id,
+              })
+            } catch {
+              // Preserve the original block error.
+            }
 
             throw blockError
           }
-
-          createdBlock = blockData
         }
 
-        const mergedLecture = {
-          ...createdLecture,
-          timeBlock: createdBlock,
-        }
+        const mergedLecture =
+          mergeLectureWithBlock(
+            createdLecture,
+            createdBlock,
+          )
 
         setLectures(
           (previousLectures) =>
@@ -355,12 +218,10 @@ const useClassLectures = (
 
       try {
         const user = await getCurrentUser()
-
-        const currentLecture =
-          lectures.find(
-            (lecture) =>
-              lecture.id === lectureId,
-          )
+        const currentLecture = lectures.find(
+          (lecture) =>
+            lecture.id === lectureId,
+        )
 
         if (!currentLecture) {
           throw new Error(
@@ -368,162 +229,76 @@ const useClassLectures = (
           )
         }
 
-        const title =
-          formData.title?.trim()
+        const values = prepareLectureValues(
+          formData,
+          currentLecture.estimated_minutes,
+        )
 
-        if (!title) {
-          throw new Error(
-            'Please enter a lecture title.',
-          )
-        }
-
-        const weekNumber =
-          formData.week_number === '' ||
-          formData.week_number === null ||
-          formData.week_number === undefined
-            ? null
-            : Number(formData.week_number)
-
-        if (
-          weekNumber !== null &&
-          (
-            Number.isNaN(weekNumber) ||
-            weekNumber < 1
-          )
-        ) {
-          throw new Error(
-            'Week number must be at least 1.',
-          )
-        }
-
-        const {
-          data: updatedLecture,
-          error: lectureError,
-        } = await supabase
-          .from('lectures')
-          .update({
-            title,
-            lecture_url:
-              formData.lecture_url?.trim() ||
-              null,
-            week_number: weekNumber,
-            estimated_minutes:
-              formData.estimated_minutes === '' ||
-              formData.estimated_minutes === null ||
-              formData.estimated_minutes === undefined
-                ? currentLecture.estimated_minutes
-                : Number(
-                    formData.estimated_minutes,
-                  ),
+        const updatedLecture =
+          await updateLectureRecord({
+            supabase,
+            userId: user.id,
+            lectureId,
+            title: values.title,
+            lectureUrl: values.lectureUrl,
+            weekNumber: values.weekNumber,
+            estimatedMinutes:
+              values.estimatedMinutes,
           })
-          .eq('id', lectureId)
-          .eq('user_id', user.id)
-          .select(LECTURE_FIELDS)
-          .single()
 
-        if (lectureError) {
-          throw lectureError
-        }
-
-        const hasCompleteTimeBlock =
-          formData.block_date &&
-          formData.start_time &&
-          formData.end_time
-
+        const hasTimeBlock =
+          hasCompleteTimeBlock(formData)
         let updatedBlock =
           currentLecture.timeBlock
 
         if (
           currentLecture.timeBlock &&
-          hasCompleteTimeBlock
+          hasTimeBlock
         ) {
-          const {
-            data: blockData,
-            error: blockError,
-          } = await supabase
-            .from('time_blocks')
-            .update({
-              title,
-              block_date:
-                formData.block_date,
-              start_time:
-                formData.start_time,
-              end_time: formData.end_time,
+          updatedBlock =
+            await updateLectureBlock({
+              supabase,
+              userId: user.id,
+              blockId:
+                currentLecture.timeBlock.id,
+              title: values.title,
+              formData,
             })
-            .eq(
-              'id',
-              currentLecture.timeBlock.id,
-            )
-            .eq('user_id', user.id)
-            .select(TIME_BLOCK_FIELDS)
-            .single()
-
-          if (blockError) {
-            throw blockError
-          }
-
-          updatedBlock = blockData
         } else if (
           !currentLecture.timeBlock &&
-          hasCompleteTimeBlock
+          hasTimeBlock
         ) {
-          const {
-            data: blockData,
-            error: blockError,
-          } = await supabase
-            .from('time_blocks')
-            .insert({
-              user_id: user.id,
-              class_id: classId,
-              coursework_id: null,
-              title,
-              block_date:
-                formData.block_date,
-              start_time:
-                formData.start_time,
-              end_time: formData.end_time,
-              block_type: 'Lecture',
-              is_recurring: false,
-              recurrence_type: 'none',
-              recurrence_end_date: null,
-              auto_generated: false,
-              lecture_id: lectureId,
+          updatedBlock =
+            await insertLectureBlock({
+              supabase,
+              userId: user.id,
+              classId,
+              lectureId,
+              title: values.title,
+              formData,
               completed:
                 currentLecture.completed,
+              autoGenerated: false,
             })
-            .select(TIME_BLOCK_FIELDS)
-            .single()
-
-          if (blockError) {
-            throw blockError
-          }
-
-          updatedBlock = blockData
         } else if (
           currentLecture.timeBlock &&
-          !hasCompleteTimeBlock
+          !hasTimeBlock
         ) {
-          const { error: blockError } =
-            await supabase
-              .from('time_blocks')
-              .delete()
-              .eq(
-                'id',
-                currentLecture.timeBlock.id,
-              )
-              .eq('user_id', user.id)
-
-          if (blockError) {
-            throw blockError
-          }
+          await deleteLectureBlockById({
+            supabase,
+            userId: user.id,
+            blockId:
+              currentLecture.timeBlock.id,
+          })
 
           updatedBlock = null
         }
 
-        const mergedLecture = {
-          ...updatedLecture,
-          timeBlock: updatedBlock,
-        }
+        const mergedLecture =
+          mergeLectureWithBlock(
+            updatedLecture,
+            updatedBlock,
+          )
 
         setLectures(
           (previousLectures) =>
@@ -575,57 +350,33 @@ const useClassLectures = (
           const nextCompleted =
             !currentLecture.completed
 
-          const {
-            data: updatedLecture,
-            error: lectureError,
-          } = await supabase
-            .from('lectures')
-            .update({
+          const updatedLecture =
+            await updateLectureCompletion({
+              supabase,
+              userId: user.id,
+              lectureId,
               completed: nextCompleted,
-              completed_at: nextCompleted
-                ? new Date().toISOString()
-                : null,
             })
-            .eq('id', lectureId)
-            .eq('user_id', user.id)
-            .select(LECTURE_FIELDS)
-            .single()
-
-          if (lectureError) {
-            throw lectureError
-          }
 
           let updatedBlock =
             currentLecture.timeBlock
 
           if (currentLecture.timeBlock) {
-            const {
-              data: blockData,
-              error: blockError,
-            } = await supabase
-              .from('time_blocks')
-              .update({
+            updatedBlock =
+              await updateLectureBlockCompletion({
+                supabase,
+                userId: user.id,
+                blockId:
+                  currentLecture.timeBlock.id,
                 completed: nextCompleted,
               })
-              .eq(
-                'id',
-                currentLecture.timeBlock.id,
-              )
-              .eq('user_id', user.id)
-              .select(TIME_BLOCK_FIELDS)
-              .single()
-
-            if (blockError) {
-              throw blockError
-            }
-
-            updatedBlock = blockData
           }
 
-          const mergedLecture = {
-            ...updatedLecture,
-            timeBlock: updatedBlock,
-          }
+          const mergedLecture =
+            mergeLectureWithBlock(
+              updatedLecture,
+              updatedBlock,
+            )
 
           setLectures(
             (previousLectures) =>
@@ -666,27 +417,17 @@ const useClassLectures = (
       try {
         const user = await getCurrentUser()
 
-        const { error: blockError } =
-          await supabase
-            .from('time_blocks')
-            .delete()
-            .eq('lecture_id', lectureId)
-            .eq('user_id', user.id)
+        await deleteLectureBlocks({
+          supabase,
+          userId: user.id,
+          lectureId,
+        })
 
-        if (blockError) {
-          throw blockError
-        }
-
-        const { error: lectureError } =
-          await supabase
-            .from('lectures')
-            .delete()
-            .eq('id', lectureId)
-            .eq('user_id', user.id)
-
-        if (lectureError) {
-          throw lectureError
-        }
+        await deleteLectureRecord({
+          supabase,
+          userId: user.id,
+          lectureId,
+        })
 
         setLectures(
           (previousLectures) =>
@@ -703,49 +444,19 @@ const useClassLectures = (
     [getCurrentUser, handleError],
   )
 
-  const nextLecture = useMemo(
-    () => getNextLecture(lectures),
+  const lectureCollections = useMemo(
+    () => getLectureCollections(lectures),
     [lectures],
   )
-
-  const completedLectures = useMemo(
-    () =>
-      lectures.filter(
-        (lecture) => lecture.completed,
-      ),
-    [lectures],
-  )
-
-  const upcomingLectures = useMemo(() => {
-    const now = new Date()
-
-    return lectures.filter((lecture) => {
-      const blockDate =
-        lecture.timeBlock?.block_date
-
-      const startTime =
-        lecture.timeBlock?.start_time
-
-      if (!blockDate || !startTime) {
-        return false
-      }
-
-      const lectureDate = new Date(
-        `${blockDate}T${startTime.slice(
-          0,
-          5,
-        )}`,
-      )
-
-      return lectureDate >= now
-    })
-  }, [lectures])
 
   return {
     lectures,
-    nextLecture,
-    completedLectures,
-    upcomingLectures,
+    nextLecture:
+      lectureCollections.nextLecture,
+    completedLectures:
+      lectureCollections.completedLectures,
+    upcomingLectures:
+      lectureCollections.upcomingLectures,
     loading,
     error,
     setError,

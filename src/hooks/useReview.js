@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 
+import { formatLocalDate } from './hookUtils'
+
 import useTodos from './useTodos'
 import useTimetable from './useTimetable'
 import useCoursework from './useCoursework'
@@ -10,22 +12,6 @@ const COMPLETED_STATUSES = [
   'complete',
   'submitted',
 ]
-
-const padNumber = (value) => {
-  return String(value).padStart(2, '0')
-}
-
-const formatLocalDate = (date) => {
-  const year = date.getFullYear()
-  const month = padNumber(
-    date.getMonth() + 1,
-  )
-  const day = padNumber(
-    date.getDate(),
-  )
-
-  return `${year}-${month}-${day}`
-}
 
 const getWeekRange = () => {
   const today = new Date()

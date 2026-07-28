@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getAuthenticatedUser } from './hookUtils'
 
 const useFlashcards = (setId) => {
   const [cards, setCards] = useState([])
@@ -77,17 +78,10 @@ const useFlashcards = (setId) => {
       )
     }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError || !user) {
-      throw new Error(
-        userError?.message ||
-          'You must be signed in.'
-      )
-    }
+    const user = await getAuthenticatedUser(
+      supabase,
+      'You must be signed in.',
+    )
 
     const { data, error } = await supabase
       .from('flashcards')

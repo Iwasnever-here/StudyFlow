@@ -52,18 +52,18 @@ const TimeBlockCard = ({
       <div className="flex h-full flex-col justify-between gap-1">
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="truncate text-xs font-semibold text-[var(--text-primary)]">
+            <p className="truncate text-xs font-semibold text-(--text-primary)">
               {block.title}
             </p>
 
             {block.auto_generated && (
-              <span className="shrink-0 rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+              <span className="shrink-0 rounded-full border border-(--border) bg-(--bg-card) px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-(--text-muted)">
                 Auto
               </span>
             )}
           </div>
 
-          <p className="mt-1 text-[10px] font-medium text-[var(--text-muted)]">
+          <p className="mt-1 text-[10px] font-medium text-(--text-muted)">
             {formatTime(
               block.start_time,
             )}
@@ -75,7 +75,7 @@ const TimeBlockCard = ({
         </div>
 
         <div className="flex items-end justify-between gap-2">
-          <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-(--text-secondary)">
             {classItem?.code ||
               getBlockTypeLabel(
                 block,
@@ -89,7 +89,7 @@ const TimeBlockCard = ({
                 onClick={() =>
                   onEdit(block)
                 }
-                className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]"
+                className="rounded-md border border-(--border) bg-(--bg-card) px-1.5 py-0.5 text-[10px] font-medium text-(--text-secondary)"
               >
                 Edit
               </button>
@@ -99,7 +99,7 @@ const TimeBlockCard = ({
                 onClick={() =>
                   onDelete(block)
                 }
-                className="rounded-md border border-[var(--error-border)] bg-[var(--error-bg)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--error-text)]"
+                className="rounded-md border border-(--error-border) bg-(--error-bg) px-1.5 py-0.5 text-[10px] font-medium text-(--error-text)"
               >
                 Delete
               </button>

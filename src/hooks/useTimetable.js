@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getAuthenticatedUser } from './hookUtils'
 import {
   getTimetableFields,
 } from '../config/timetableFields'
@@ -40,25 +41,11 @@ const useTimetable = () => {
   ] = useState(null)
 
   const getUser = useCallback(
-    async () => {
-      const {
-        data: { user },
-        error,
-      } =
-        await supabase.auth.getUser()
-
-      if (error) {
-        throw error
-      }
-
-      if (!user) {
-        throw new Error(
-          'You must be signed in to view your timetable.',
-        )
-      }
-
-      return user
-    },
+    () =>
+      getAuthenticatedUser(
+        supabase,
+        'You must be signed in to view your timetable.',
+      ),
     [],
   )
 

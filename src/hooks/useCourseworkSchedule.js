@@ -8,6 +8,7 @@ import {
 import {
   supabase,
 } from '../lib/supabaseClient'
+import { getAuthenticatedUser } from './hookUtils'
 
 import {
   buildCourseworkSchedule,
@@ -50,25 +51,11 @@ const useCourseworkSchedule = (
   ] = useState([])
 
   const getUser = useCallback(
-    async () => {
-      const {
-        data: { user },
-        error,
-      } =
-        await supabase.auth.getUser()
-
-      if (error) {
-        throw error
-      }
-
-      if (!user) {
-        throw new Error(
-          'You must be signed in to schedule coursework.',
-        )
-      }
-
-      return user
-    },
+    () =>
+      getAuthenticatedUser(
+        supabase,
+        'You must be signed in to schedule coursework.',
+      ),
     [],
   )
 

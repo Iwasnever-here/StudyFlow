@@ -6,6 +6,10 @@ import {
 } from 'react'
 
 import { supabase } from '../lib/supabaseClient'
+import {
+  formatLocalDate,
+  getAuthenticatedUser,
+} from './hookUtils'
 import { initialTodoFields } from '../config/todoFields'
 
 export const TODO_INITIAL_VALUES = {
@@ -15,24 +19,6 @@ export const TODO_INITIAL_VALUES = {
 }
 
 const COMPLETION_DELAY = 2000
-
-const padNumber = (value) => {
-  return String(value).padStart(2, '0')
-}
-
-const formatLocalDate = (date) => {
-  const year = date.getFullYear()
-
-  const month = padNumber(
-    date.getMonth() + 1
-  )
-
-  const day = padNumber(
-    date.getDate()
-  )
-
-  return `${year}-${month}-${day}`
-}
 
 const getTodayString = () => {
   return formatLocalDate(new Date())
@@ -152,25 +138,14 @@ const useTodos = () => {
   const [pageError, setPageError] =
     useState(null)
 
-  const getCurrentUser =
-    useCallback(async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser()
-
-      if (error) {
-        throw error
-      }
-
-      if (!user) {
-        throw new Error(
-          'You must be signed in to manage your tasks.'
-        )
-      }
-
-      return user
-    }, [])
+  const getCurrentUser = useCallback(
+    () =>
+      getAuthenticatedUser(
+        supabase,
+        'You must be signed in to manage your tasks.',
+      ),
+    [],
+  )
 
   const fetchPageData =
     useCallback(async () => {

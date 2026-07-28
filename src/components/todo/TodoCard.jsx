@@ -24,11 +24,11 @@ const getTodayString = () => {
   const year = today.getFullYear()
 
   const month = padNumber(
-    today.getMonth() + 1
+    today.getMonth() + 1,
   )
 
   const day = padNumber(
-    today.getDate()
+    today.getDate(),
   )
 
   return `${year}-${month}-${day}`
@@ -49,7 +49,7 @@ const parseDateString = (dateString) => {
   return new Date(
     year,
     month - 1,
-    day
+    day,
   )
 }
 
@@ -67,12 +67,12 @@ const formatDueDate = (dueDate) => {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
-    }
+    },
   ).format(parsedDate)
 }
 
 const getDueDateDisplay = (
-  dueDate
+  dueDate,
 ) => {
   if (!dueDate) {
     return {
@@ -87,7 +87,7 @@ const getDueDateDisplay = (
   if (dueDate < today) {
     return {
       label: `Overdue · ${formatDueDate(
-        dueDate
+        dueDate,
       )}`,
       className:
         'bg-red-500/10 text-red-700',
@@ -130,12 +130,12 @@ const TodoCard = ({
 
   useEffect(() => {
     const handleOutsideClick = (
-      event
+      event,
     ) => {
       if (
         menuRef.current &&
         !menuRef.current.contains(
-          event.target
+          event.target,
         )
       ) {
         setIsMenuOpen(false)
@@ -144,13 +144,13 @@ const TodoCard = ({
 
     document.addEventListener(
       'mousedown',
-      handleOutsideClick
+      handleOutsideClick,
     )
 
     return () => {
       document.removeEventListener(
         'mousedown',
-        handleOutsideClick
+        handleOutsideClick,
       )
     }
   }, [])
@@ -190,11 +190,8 @@ const TodoCard = ({
   return (
     <article
       className={`
-        relative rounded-2xl
-        border border-(--border)
-        bg-(--bg-card)
-        p-4
-        shadow-sm
+        relative rounded-2xl border border-(--border)
+        bg-(--bg-card) p-4 shadow-sm
         transition-all duration-500
         ${
           isCompleting
@@ -214,28 +211,16 @@ const TodoCard = ({
           onClick={handleComplete}
           aria-label={`Complete ${todo.title}`}
           className="
-            mt-0.5 flex h-7 w-7
-            shrink-0 items-center
-            justify-center rounded-full
-            text-(--color-primary)
-            transition
-            hover:bg-(--color-primary)/10
-            focus:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-(--color-primary)
-            disabled:cursor-default
-          "
+            mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+            rounded-full text-(--color-primary) transition
+            hover:bg-(--color-primary)/10 focus:outline-none
+            focus-visible:ring-2 focus-visible:ring-(--color-primary)
+            disabled:cursor-default"
         >
           {isCompleting ? (
-            <span
-              className="
-                flex h-6 w-6
-                items-center justify-center
-                rounded-full
-                bg-(--color-primary)
-                text-white
-              "
-            >
+            <span className="
+              flex h-6 w-6 items-center justify-center
+              rounded-full bg-(--color-primary) text-white">
               <LuCheck
                 size={15}
                 strokeWidth={3}
@@ -249,10 +234,8 @@ const TodoCard = ({
         <div className="min-w-0 flex-1">
           <h3
             className={`
-              wrap-break-word pr-8
-              text-sm font-semibold
-              text-(--text-primary)
-              transition
+              wrap-break-word pr-8 text-sm font-semibold
+              text-(--text-primary) transition
               ${
                 isCompleting
                   ? 'line-through'
@@ -266,39 +249,26 @@ const TodoCard = ({
           <div className="mt-3">
             <span
               className={`
-                inline-flex items-center
-                gap-1.5 rounded-lg
-                px-2.5 py-1.5
-                text-xs font-semibold
+                inline-flex items-center gap-1.5 rounded-lg
+                px-2.5 py-1.5 text-xs font-semibold
                 ${dueDateDisplay.className}
               `}
             >
-              <LuCalendarDays
-                size={13}
-              />
+              <LuCalendarDays size={13} />
 
               {dueDateDisplay.label}
             </span>
           </div>
 
           {classItem && (
-            <div
-              className="
-                mt-3 flex items-center
-                gap-2
-              "
-            >
+            <div className="mt-3 flex items-center gap-2">
               <span
                 className="
-                  flex h-7 w-7
-                  shrink-0 items-center
-                  justify-center
-                  rounded-lg
-                "
+                  flex h-7 w-7 shrink-0 items-center justify-center
+                  rounded-lg"
                 style={{
                   backgroundColor:
                     `${classItem.color || '#26371f'}20`,
-
                   color:
                     classItem.color ||
                     '#26371f',
@@ -308,23 +278,16 @@ const TodoCard = ({
               </span>
 
               <div className="min-w-0">
-                <p
-                  className="
-                    truncate text-xs
-                    font-medium
-                    text-(--text-secondary)
-                  "
-                >
+                <p className="
+                  truncate text-xs font-medium
+                  text-(--text-secondary)">
                   {classItem.name}
                 </p>
 
                 {classItem.code && (
-                  <p
-                    className="
-                      truncate text-[11px]
-                      text-(--text-muted)
-                    "
-                  >
+                  <p className="
+                    truncate text-[11px]
+                    text-(--text-muted)">
                     {classItem.code}
                   </p>
                 )}
@@ -343,54 +306,35 @@ const TodoCard = ({
             onClick={() =>
               setIsMenuOpen(
                 (currentValue) =>
-                  !currentValue
+                  !currentValue,
               )
             }
             aria-label={`Actions for ${todo.title}`}
             aria-expanded={isMenuOpen}
             className="
-              flex h-8 w-8
-              items-center justify-center
-              rounded-lg
-              text-(--text-muted)
-              transition
-              hover:bg-(--bg-input)
-              hover:text-(--text-primary)
-              focus:outline-none
-              focus-visible:ring-2
+              flex h-8 w-8 items-center justify-center rounded-lg
+              text-(--text-muted) transition
+              hover:bg-(--bg-input) hover:text-(--text-primary)
+              focus:outline-none focus-visible:ring-2
               focus-visible:ring-(--color-primary)
-              disabled:cursor-default
-            "
+              disabled:cursor-default"
           >
             <LuEllipsis size={19} />
           </button>
 
           {isMenuOpen && (
-            <div
-              className="
-                absolute right-0 top-10
-                z-20 w-36
-                overflow-hidden
-                rounded-xl
-                border border-(--border)
-                bg-(--bg-card)
-                p-1.5 shadow-lg
-              "
-            >
+            <div className="
+              absolute right-0 top-10 z-20 w-36 overflow-hidden
+              rounded-xl border border-(--border)
+              bg-(--bg-card) p-1.5 shadow-lg">
               <button
                 type="button"
                 onClick={handleEdit}
                 className="
-                  flex w-full
-                  items-center gap-2
-                  rounded-lg
-                  px-3 py-2
-                  text-left text-sm
-                  font-medium
-                  text-(--text-primary)
-                  transition
-                  hover:bg-(--bg-input)
-                "
+                  flex w-full items-center gap-2 rounded-lg
+                  px-3 py-2 text-left text-sm font-medium
+                  text-(--text-primary) transition
+                  hover:bg-(--bg-input)"
               >
                 <LuPencil size={15} />
                 Edit
@@ -400,16 +344,10 @@ const TodoCard = ({
                 type="button"
                 onClick={handleDelete}
                 className="
-                  flex w-full
-                  items-center gap-2
-                  rounded-lg
-                  px-3 py-2
-                  text-left text-sm
-                  font-medium
-                  text-(--error-text)
-                  transition
-                  hover:bg-(--error-bg)
-                "
+                  flex w-full items-center gap-2 rounded-lg
+                  px-3 py-2 text-left text-sm font-medium
+                  text-(--error-text) transition
+                  hover:bg-(--error-bg)"
               >
                 <LuTrash2 size={15} />
                 Delete

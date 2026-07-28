@@ -17,8 +17,8 @@ const CalendarSidebar = ({
 }) => {
   return (
     <aside className="space-y-4">
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+      <section className="rounded-3xl border border-(--border) bg-(--bg-card) p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text-muted)">
           Filters
         </p>
 
@@ -39,8 +39,8 @@ const CalendarSidebar = ({
                   }
                   className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-medium ${
                     active
-                      ? 'border-[var(--border-accent)] bg-[var(--bg-input)] text-[var(--text-primary)]'
-                      : 'border-transparent text-[var(--text-muted)]'
+                      ? 'border-(--border-accent) bg-(--bg-input) text-(--text-primary)'
+                      : 'border-transparent text-(--text-muted)'
                   }`}
                 >
                   <span>{type}</span>
@@ -48,8 +48,8 @@ const CalendarSidebar = ({
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${
                       active
-                        ? 'bg-[var(--color-primary)]'
-                        : 'bg-[var(--disabled)]'
+                        ? 'bg-(--color-primary)'
+                        : 'bg-(--disabled)'
                     }`}
                   />
                 </button>
@@ -58,7 +58,7 @@ const CalendarSidebar = ({
           )}
         </div>
 
-        <label className="mt-4 block text-xs font-semibold text-[var(--text-secondary)]">
+        <label className="mt-4 block text-xs font-semibold text-(--text-secondary)">
           Class
         </label>
 
@@ -69,7 +69,7 @@ const CalendarSidebar = ({
               event.target.value,
             )
           }
-          className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)]"
+          className="mt-2 w-full rounded-xl border border-(--border) bg-(--bg-input) px-3 py-2 text-sm text-(--text-primary)"
         >
           <option value="">
             All classes
@@ -89,14 +89,14 @@ const CalendarSidebar = ({
         </select>
       </section>
 
-      <section className="h-[279px] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+      <section className="h-[279px] overflow-y-auto rounded-3xl border border-(--border) bg-(--bg-card) p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text-muted)">
           Today
         </p>
 
         <div className="mt-4 space-y-3">
           {todayBlocks.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">
+            <p className="text-sm text-(--text-muted)">
               Nothing scheduled today.
             </p>
           ) : (
@@ -105,13 +105,13 @@ const CalendarSidebar = ({
               .map((block) => (
                 <div
                   key={block.id}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-input)] p-3"
+                  className="rounded-xl border border-(--border) bg-(--bg-input) p-3"
                 >
-                  <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                  <p className="truncate text-sm font-semibold text-(--text-primary)">
                     {block.title}
                   </p>
 
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  <p className="mt-1 text-xs text-(--text-muted)">
                     {formatTime(
                       block.start_time,
                     )}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getAuthenticatedUser } from './hookUtils'
 
 const CLASS_FIELDS = `
   id,
@@ -31,24 +32,14 @@ const useClasses = ({ fetchOnMount = true } = {}) => {
     return caughtError
   }, [])
 
-  const getCurrentUser = useCallback(async () => {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      throw userError
-    }
-
-    if (!user) {
-      throw new Error(
+  const getCurrentUser = useCallback(
+    () =>
+      getAuthenticatedUser(
+        supabase,
         'You must be signed in to manage classes.',
-      )
-    }
-
-    return user
-  }, [])
+      ),
+    [],
+  )
 
   const prepareClassData = useCallback((formData) => {
     const name = formData.name?.trim()

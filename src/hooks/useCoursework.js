@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getAuthenticatedUser } from './hookUtils'
 
 const ASSIGNMENT_FIELDS = `
   id,
@@ -118,25 +119,11 @@ const useCoursework = () => {
     useState(null)
 
   const getUser = useCallback(
-    async () => {
-      const {
-        data: { user },
-        error: authError,
-      } =
-        await supabase.auth.getUser()
-
-      if (authError) {
-        throw authError
-      }
-
-      if (!user) {
-        throw new Error(
-          'You must be signed in to view coursework.',
-        )
-      }
-
-      return user
-    },
+    () =>
+      getAuthenticatedUser(
+        supabase,
+        'You must be signed in to view coursework.',
+      ),
     [],
   )
 

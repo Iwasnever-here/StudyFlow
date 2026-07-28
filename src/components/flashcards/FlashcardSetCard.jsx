@@ -19,8 +19,8 @@ const FlashcardSetCard = ({
       className="
         group relative min-h-60 w-full
         overflow-hidden rounded-3xl
-        border border-[var(--border)]
-        bg-[var(--bg-card)]
+        border border-(--border)
+        bg-(--bg-card)
         px-5 pb-5 pt-7
         text-left
         shadow-sm
@@ -29,7 +29,7 @@ const FlashcardSetCard = ({
         hover:shadow-md
         focus:outline-none
         focus-visible:ring-2
-        focus-visible:ring-[var(--color-primary)]
+        focus-visible:ring-(--color-primary)
       "
     >
       <div
@@ -76,7 +76,7 @@ const FlashcardSetCard = ({
               mt-5 line-clamp-2
               text-2xl font-bold
               leading-tight
-              text-[var(--text-primary)]
+              text-(--text-primary)
             "
           >
             {flashcardSet.title}
@@ -85,7 +85,7 @@ const FlashcardSetCard = ({
           <p
             className="
               mt-2 truncate text-sm
-              text-[var(--text-muted)]
+              text-(--text-muted)
             "
           >
             {classItem?.name ||
@@ -96,10 +96,10 @@ const FlashcardSetCard = ({
         <span
           className="
             shrink-0 text-lg
-            text-[var(--text-muted)]
+            text-(--text-muted)
             transition-transform
             group-hover:translate-x-1
-            group-hover:text-[var(--text-primary)]
+            group-hover:text-(--text-primary)
           "
           aria-hidden="true"
         >
@@ -111,11 +111,11 @@ const FlashcardSetCard = ({
         <span
           className="
             rounded-lg border
-            border-[var(--border)]
-            bg-[var(--bg-input)]
+            border-(--border)
+            bg-(--bg-input)
             px-3 py-1.5
             text-xs font-medium
-            text-[var(--text-secondary)]
+            text-(--text-secondary)
           "
         >
           {cardCount}{' '}
@@ -128,11 +128,11 @@ const FlashcardSetCard = ({
           <span
             className="
               rounded-lg border
-              border-[var(--border)]
-              bg-[var(--bg-input)]
+              border-(--border)
+              bg-(--bg-input)
               px-3 py-1.5
               text-xs font-medium
-              text-[var(--text-secondary)]
+              text-(--text-secondary)
             "
           >
             {classItem.code}
@@ -143,14 +143,14 @@ const FlashcardSetCard = ({
       <div
         className="
           mt-5 border-t
-          border-[var(--border)]
+          border-(--border)
           pt-5
         "
       >
         <span
           className="
             text-sm font-semibold
-            text-[var(--text-primary)]
+            text-(--text-primary)
           "
         >
           Click to view

@@ -52,36 +52,30 @@ const CalendarDay = ({
     HOURS.length * HOUR_HEIGHT
 
   return (
-    <section className="min-w-0 border-l border-[var(--border)]">
+    <section className="min-w-0 border-l border-(--border)">
       <header
         className={`
-          sticky top-0 z-20
-          flex h-16 flex-col
-          items-center justify-center
-          border-b border-[var(--border)]
+          sticky top-0 z-20 flex h-16 flex-col
+          items-center justify-center border-b border-(--border)
           px-1 text-center
           ${
             today
-              ? 'bg-[var(--bg-input)]'
-              : 'bg-[var(--bg-card)]'
+              ? 'bg-(--bg-input)'
+              : 'bg-(--bg-card)'
           }
         `}
       >
-        <p className="truncate text-[11px] font-semibold text-[var(--text-primary)] sm:text-xs">
+        <p className="
+          truncate text-[11px] font-semibold
+          text-(--text-primary) sm:text-xs">
           {formatDayHeading(date)}
         </p>
 
         {today && (
-          <span
-            className="
-              mt-1 inline-flex rounded-full
-              bg-[var(--color-primary)]
-              px-2 py-0.5
-              text-[8px] font-semibold
-              uppercase tracking-wide
-              text-[var(--text-light)]
-            "
-          >
+          <span className="
+            mt-1 inline-flex rounded-full bg-(--color-primary)
+            px-2 py-0.5 text-[8px] font-semibold uppercase
+            tracking-wide text-(--text-light)">
             Today
           </span>
         )}
@@ -97,10 +91,8 @@ const CalendarDay = ({
           <div
             key={hour}
             className="
-              pointer-events-none absolute
-              left-0 right-0
-              border-t border-[var(--grid)]
-            "
+              pointer-events-none absolute left-0 right-0
+              border-t border-(--grid)"
             style={{
               top:
                 (hour -
@@ -116,21 +108,15 @@ const CalendarDay = ({
             calendarHeight && (
             <div
               className="
-                pointer-events-none absolute
-                left-0 right-0 z-30
-                border-t-2
-                border-[var(--color-primary)]
-              "
+                pointer-events-none absolute left-0 right-0 z-30
+                border-t-2 border-(--color-primary)"
               style={{
                 top: currentTimeTop,
               }}
             >
-              <span
-                className="
-                  absolute -left-1.5 -top-1.5
-                  h-3 w-3 rounded-full
-                  bg-[var(--color-primary)]
-                "
+              <span className="
+                absolute -left-1.5 -top-1.5 h-3 w-3
+                rounded-full bg-(--color-primary)"
               />
             </div>
           )}
@@ -185,38 +171,21 @@ const CalendarToolbar = ({
   ]
 
   return (
-    <div
-      className="
-        flex flex-col gap-3
-        rounded-3xl
-        border border-[var(--border)]
-        bg-[var(--bg-card)]
-        p-4
-        sm:flex-row
-        sm:items-center
-        sm:justify-between
-      "
-    >
+    <div className="
+      flex flex-col gap-3 rounded-3xl border border-(--border)
+      bg-(--bg-card) p-4 sm:flex-row sm:items-center
+      sm:justify-between">
       <div>
-        <p
-          className="
-            text-xs font-semibold uppercase
-            tracking-[0.18em]
-            text-[var(--text-muted)]
-          "
-        >
+        <p className="
+          text-xs font-semibold uppercase tracking-[0.18em]
+          text-(--text-muted)">
           Weekly calendar
         </p>
 
-        <h2
-          className="
-            mt-1 text-xl font-semibold
-            text-[var(--text-primary)]
-          "
-        >
-          {formatMonthHeading(
-            currentDate,
-          )}
+        <h2 className="
+          mt-1 text-xl font-semibold
+          text-(--text-primary)">
+          {formatMonthHeading(currentDate)}
         </h2>
       </div>
 
@@ -228,14 +197,10 @@ const CalendarToolbar = ({
               type="button"
               onClick={handler}
               className="
-                rounded-xl
-                border border-[var(--border)]
-                bg-[var(--bg-input)]
-                px-3 py-2
-                text-sm font-medium
-                text-[var(--text-primary)]
-                hover:border-[var(--border-accent)]
-              "
+                rounded-xl border border-(--border)
+                bg-(--bg-input) px-3 py-2
+                text-sm font-medium text-(--text-primary)
+                hover:border-(--border-accent)"
             >
               {label}
             </button>
@@ -252,12 +217,9 @@ const TimeColumn = () => {
 
   return (
     <div className="w-12 shrink-0 sm:w-14">
-      <div
-        className="
-          sticky top-0 z-30 h-16
-          border-b border-[var(--border)]
-          bg-[var(--bg-card)]
-        "
+      <div className="
+        sticky top-0 z-30 h-16 border-b border-(--border)
+        bg-(--bg-card)"
       />
 
       <div
@@ -270,12 +232,9 @@ const TimeColumn = () => {
           <span
             key={hour}
             className="
-              absolute right-1
-              -translate-y-1/2
-              text-[9px] font-medium
-              text-[var(--text-muted)]
-              sm:right-2 sm:text-[10px]
-            "
+              absolute right-1 -translate-y-1/2
+              text-[9px] font-medium text-(--text-muted)
+              sm:right-2 sm:text-[10px]"
             style={{
               top:
                 (hour -
@@ -318,23 +277,15 @@ const WeeklyCalendar = ({
         onToday={onToday}
       />
 
-      <div
-        className="
-          max-h-[calc(100vh-12rem)]
-          overflow-auto
-          rounded-3xl
-          border border-[var(--border)]
-          bg-[var(--bg-card)]
-        "
-      >
-        <div
-          className="
-            grid min-w-[850px] max-h-[560px]
-            grid-cols-[48px_repeat(7,minmax(0,1fr))]
-            sm:grid-cols-[56px_repeat(7,minmax(0,1fr))]
-            xl:min-w-0
-          "
-        >
+      <div className="
+        max-h-[calc(100vh-12rem)] overflow-auto
+        rounded-3xl border border-(--border)
+        bg-(--bg-card)">
+        <div className="
+          grid max-h-[560px]
+          grid-cols-[48px_repeat(7,minmax(0,1fr))]
+          sm:grid-cols-[56px_repeat(7,minmax(0,1fr))]
+          xl:min-w-0">
           <TimeColumn />
 
           {days.map((date) => (
