@@ -1,79 +1,126 @@
-import { describe, expect, it, vi } from 'vitest'
+import {
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
+
 import {
   formatLocalDate,
   getAuthenticatedUser,
   getErrorMessage,
 } from '../hookUtils'
 
+const createSupabase = ({
+  user = null,
+  error = null,
+} = {}) => ({
+  auth: {
+    getUser: vi.fn().mockResolvedValue({
+      data: {
+        user,
+      },
+      error,
+    }),
+  },
+})
+
 describe('hookUtils', () => {
-  describe('getAuthenticatedUser', () => {
-    it('returns the authenticated user', async () => {
-      const user = { id: 'user-1' }
-      const supabase = {
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: { user },
-            error: null,
-          }),
-        },
-      }
+  it('returns the authenticated user', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'test@example.com',
+    }
 
-      await expect(
-        getAuthenticatedUser(supabase, 'Sign in.'),
-      ).resolves.toEqual(user)
-    })
+    const supabase =
+      createSupabase({ user })
 
-    it('throws the Supabase auth error', async () => {
-      const authError = new Error('Auth failed')
-      const supabase = {
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: { user: null },
-            error: authError,
-          }),
-        },
-      }
+    const result =
+      await getAuthenticatedUser(
+        supabase,
+        'You must be signed in.',
+      )
 
-      await expect(
-        getAuthenticatedUser(supabase, 'Sign in.'),
-      ).rejects.toBe(authError)
-    })
+    expect(
+      supabase.auth.getUser,
+    ).toHaveBeenCalledOnce()
 
-    it('throws the supplied message when no user exists', async () => {
-      const supabase = {
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: { user: null },
-            error: null,
-          }),
-        },
-      }
-
-      await expect(
-        getAuthenticatedUser(
-          supabase,
-          'You must be signed in.',
-        ),
-      ).rejects.toThrow('You must be signed in.')
-    })
+    expect(result).toEqual(user)
   })
 
-  it('uses an error message before the fallback', () => {
+  it('throws the Supabase authentication error', async () => {
+    const authError =
+      new Error(
+        'Authentication failed.',
+      )
+
+    const supabase =
+      createSupabase({
+        error: authError,
+      })
+
+    await expect(
+      getAuthenticatedUser(
+        supabase,
+        'You must be signed in.',
+      ),
+    ).rejects.toBe(authError)
+  })
+
+  it('throws the provided message when no user exists', async () => {
+    const supabase =
+      createSupabase()
+
+    await expect(
+      getAuthenticatedUser(
+        supabase,
+        'You must be signed in.',
+      ),
+    ).rejects.toThrow(
+      'You must be signed in.',
+    )
+  })
+
+  it('returns the error message when one exists', () => {
     expect(
       getErrorMessage(
-        new Error('Specific error'),
-        'Fallback error',
+        {
+          message:
+            'Unable to load data.',
+        },
+        'Fallback message.',
       ),
-    ).toBe('Specific error')
-
-    expect(
-      getErrorMessage(null, 'Fallback error'),
-    ).toBe('Fallback error')
+    ).toBe(
+      'Unable to load data.',
+    )
   })
 
-  it('formats a date using local calendar values', () => {
-    const date = new Date(2026, 0, 5, 12, 0, 0)
+  it('returns the fallback error message', () => {
+    expect(
+      getErrorMessage(
+        null,
+        'Fallback message.',
+      ),
+    ).toBe(
+      'Fallback message.',
+    )
 
-    expect(formatLocalDate(date)).toBe('2026-01-05')
+    expect(
+      getErrorMessage(
+        {},
+        'Fallback message.',
+      ),
+    ).toBe(
+      'Fallback message.',
+    )
+  })
+
+  it('formats a date using the local calendar date', () => {
+    const date =
+      new Date(2026, 6, 5)
+
+    expect(
+      formatLocalDate(date),
+    ).toBe('2026-07-05')
   })
 })
