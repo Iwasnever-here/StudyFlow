@@ -4,28 +4,16 @@ import { LuArrowLeft, LuBlocks, LuRotateCcw } from 'react-icons/lu'
 
 import useFlashcardSets from '../hooks/useFlashcardSets'
 import useFlashcards from '../hooks/useFlashcards'
-
-const BOARD_SIZE = 8
-
-const PIECES = [
-  { id: 'line4', cells: [[0, 0], [0, 1], [0, 2], [0, 3]], color: '#3f6b35' },
-  { id: 'line3', cells: [[0, 0], [0, 1], [0, 2]], color: '#6f8d50' },
-  { id: 'square', cells: [[0, 0], [0, 1], [1, 0], [1, 1]], color: '#7f9657' },
-  { id: 'lshape', cells: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]], color: '#9a8f4f' },
-  { id: 'corner', cells: [[0, 0], [1, 0], [1, 1]], color: '#b08a3c' },
-  { id: 'single', cells: [[0, 0]], color: '#4d7c3f' },
-]
-
-const createEmptyBoard = () =>
-  Array.from({ length: BOARD_SIZE }, () =>
-    Array.from({ length: BOARD_SIZE }, () => null),
-  )
-
-const getRandomItem = (items) =>
-  items.length ? items[Math.floor(Math.random() * items.length)] : null
-
-const shuffleItems = (items) =>
-  [...items].sort(() => Math.random() - 0.5)
+import { PiecesPanel, QuestionPanel } from '../components/flashcards/FlashcardGamePanels'
+import {
+  BOARD_SIZE,
+  createEmptyBoard,
+  getRandomItem,
+  shuffleItems,
+  canPlacePiece,
+  clearLines,
+  getRandomPieces,
+} from '../utils/flashcardGameUtils'
 
 const FlashcardGame = () => {
   const { setId } = useParams()
@@ -52,6 +40,7 @@ const FlashcardGame = () => {
   const [currentCard, setCurrentCard] = useState(null)
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [usedCardIds, setUsedCardIds] = useState([])
+  const [gameError, setGameError] = useState(null)
   const [feedback, setFeedback] = useState(
     'Answer a question to unlock blocks.',
   )
@@ -72,7 +61,7 @@ const FlashcardGame = () => {
 
   const classColor = classItem?.color || '#26371f'
   const loading = loadingSets || loadingCards
-  const error = setError || cardError
+  const error = setError || cardError || gameError
 
   useEffect(() => {
     if (!cards.length) {
@@ -98,6 +87,7 @@ const FlashcardGame = () => {
     setNeedsQuestion(true)
     setSelectedAnswer(null)
     setUsedCardIds([])
+    setGameError(null)
     setFeedback('Answer a question to unlock blocks.')
   }, [setId])
 
@@ -135,39 +125,6 @@ const FlashcardGame = () => {
     setSelectedAnswer(null)
   }
 
-
-  const getRandomPieces = () =>
-    Array.from({ length: 3 }, (_, index) => {
-      const base = getRandomItem(PIECES)
-
-      return {
-        ...base,
-        instanceId: `${base.id}-${Date.now()}-${index}`,
-      }
-    })
-
-  const canPlacePiece = (
-    piece,
-    row,
-    col,
-    currentBoard = board,
-  ) => {
-    if (!piece) return false
-
-    return piece.cells.every(([r, c]) => {
-      const nextRow = row + r
-      const nextCol = col + c
-
-      return (
-        nextRow >= 0 &&
-        nextRow < BOARD_SIZE &&
-        nextCol >= 0 &&
-        nextCol < BOARD_SIZE &&
-        !currentBoard[nextRow][nextCol]
-      )
-    })
-  }
-
   const isPreviewCell = (row, col) => {
     if (!selectedPiece || !hoverCell) return false
 
@@ -176,39 +133,6 @@ const FlashcardGame = () => {
         hoverCell.row + r === row &&
         hoverCell.col + c === col,
     )
-  }
-
-  const clearLines = (newBoard) => {
-    const fullRows = newBoard
-      .map((row, index) => (row.every(Boolean) ? index : null))
-      .filter((index) => index !== null)
-
-    const fullColumns = []
-
-    for (let column = 0; column < BOARD_SIZE; column += 1) {
-      if (newBoard.every((row) => Boolean(row[column]))) {
-        fullColumns.push(column)
-      }
-    }
-
-    if (!fullRows.length && !fullColumns.length) {
-      return { board: newBoard, cleared: 0 }
-    }
-
-    const clearedBoard = newBoard.map((row, rowIndex) =>
-      row.map((cell, columnIndex) => {
-        const shouldClear =
-          fullRows.includes(rowIndex) ||
-          fullColumns.includes(columnIndex)
-
-        return shouldClear ? null : cell
-      }),
-    )
-
-    return {
-      board: clearedBoard,
-      cleared: fullRows.length + fullColumns.length,
-    }
   }
 
   const handleAnswer = (answer) => {
@@ -220,21 +144,17 @@ const FlashcardGame = () => {
       return
     }
 
-    const wasCorrect =
-      answer === currentCard.back
+    const wasCorrect = answer === currentCard.back
 
     setSelectedAnswer(answer)
+    setGameError(null)
 
     if (!wasCorrect) {
-      setFeedback(
-        'Incorrect. A new card is coming next.',
-      )
+      setFeedback('Incorrect. A new card is coming next.')
 
       window.setTimeout(() => {
         chooseRandomCard()
-        setFeedback(
-          'Answer a question to unlock blocks.',
-        )
+        setFeedback('Answer a question to unlock blocks.')
       }, 700)
 
       return
@@ -259,7 +179,7 @@ const FlashcardGame = () => {
       return
     }
 
-    if (!canPlacePiece(selectedPiece, row, col)) {
+    if (!canPlacePiece(selectedPiece, row, col, board)) {
       setFeedback('That piece does not fit there.')
       return
     }
@@ -314,10 +234,11 @@ const FlashcardGame = () => {
     setSelectedAnswer(null)
     setUsedCardIds([])
     setCurrentCard(getRandomItem(cards))
+    setGameError(null)
     setFeedback('Answer a question to unlock blocks.')
   }
 
-  if (loading) {
+  if (loading || (cards.length > 0 && !currentCard)) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
         <p className="text-sm text-(--text-muted)">
@@ -327,7 +248,7 @@ const FlashcardGame = () => {
     )
   }
 
-  if (!flashcardSet || !cards.length || !currentCard) {
+  if (!flashcardSet || !cards.length) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
         <Link
@@ -470,6 +391,7 @@ const FlashcardGame = () => {
                             selectedPiece,
                             hoverCell.row,
                             hoverCell.col,
+                            board,
                           )
                         : false
 
@@ -506,172 +428,6 @@ const FlashcardGame = () => {
         </div>
       </section>
     </main>
-  )
-}
-
-const PiecesPanel = ({
-  pieces,
-  selectedPiece,
-  setSelectedPiece,
-  setHoverCell,
-  setFeedback,
-  classColor,
-}) => (
-  <div className="rounded-2xl border border-(--border) bg-(--bg-page) p-5">
-    <p className="text-sm font-semibold text-(--text-primary)">
-      Available pieces
-    </p>
-
-    <p className="mt-1 text-sm text-(--text-muted)">
-      Choose one, then click where it should start.
-    </p>
-
-    <div className="mt-5 flex flex-col gap-3">
-      {pieces.map((piece) => {
-        const isSelected =
-          selectedPiece?.instanceId === piece.instanceId
-
-        return (
-          <button
-            key={piece.instanceId}
-            type="button"
-            onClick={() => {
-              setSelectedPiece(piece)
-              setHoverCell(null)
-              setFeedback(
-                'Hover over the board to preview placement.',
-              )
-            }}
-            className="w-full rounded-xl border p-4 text-left transition hover:bg-(--bg-hover)"
-            style={{
-              borderColor: isSelected
-                ? classColor
-                : 'var(--border)',
-              backgroundColor: isSelected
-                ? 'var(--bg-hover)'
-                : 'var(--bg-card)',
-            }}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <PiecePreview piece={piece} />
-              <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                {piece.cells.length} blocks
-              </span>
-            </div>
-          </button>
-        )
-      })}
-    </div>
-  </div>
-)
-
-const QuestionPanel = ({
-  currentCard,
-  options,
-  selectedAnswer,
-  onAnswer,
-  cards,
-  classColor,
-}) => (
-  <div className="rounded-2xl border border-(--border) bg-(--bg-page) p-5">
-    <p
-      className="text-xs font-bold uppercase tracking-wider"
-      style={{ color: classColor }}
-    >
-      Question
-    </p>
-
-    <h2 className="mt-4 whitespace-pre-wrap text-xl font-bold leading-8 text-(--text-primary)">
-      {currentCard.front}
-    </h2>
-
-    <div className="mt-5 grid gap-3">
-      {options.map((option, index) => {
-        const isSelected = selectedAnswer === option
-        const isCorrect = option === currentCard.back
-
-        let optionStyle = {
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--bg-card)',
-          color: 'var(--text-primary)',
-        }
-
-        if (selectedAnswer && isCorrect) {
-          optionStyle = {
-            borderColor: classColor,
-            backgroundColor: 'var(--bg-hover)',
-            color: 'var(--text-primary)',
-          }
-        } else if (selectedAnswer && isSelected) {
-          optionStyle = {
-            borderColor: 'var(--error-border)',
-            backgroundColor: 'var(--error-bg)',
-            color: 'var(--error-text)',
-          }
-        }
-
-        return (
-          <button
-            key={`${option}-${index}`}
-            type="button"
-            disabled={Boolean(selectedAnswer)}
-            onClick={() => onAnswer(option)}
-            className="rounded-xl border px-4 py-3 text-left text-sm font-semibold transition hover:bg-(--bg-hover) disabled:cursor-not-allowed"
-            style={optionStyle}
-          >
-            {option}
-          </button>
-        )
-      })}
-    </div>
-
-    {cards.length < 4 && (
-      <p className="mt-4 rounded-xl border border-(--border) bg-(--bg-card) px-4 py-3 text-xs font-medium text-(--text-muted)">
-        Add at least four cards for stronger multiple-choice questions.
-      </p>
-    )}
-  </div>
-)
-
-const PiecePreview = ({ piece }) => {
-  const maxRow = Math.max(...piece.cells.map(([row]) => row))
-  const maxColumn = Math.max(
-    ...piece.cells.map(([, column]) => column),
-  )
-
-  return (
-    <div
-      className="inline-grid gap-1"
-      style={{
-        gridTemplateColumns: `repeat(${maxColumn + 1}, 24px)`,
-        gridTemplateRows: `repeat(${maxRow + 1}, 24px)`,
-      }}
-    >
-      {Array.from({
-        length: (maxRow + 1) * (maxColumn + 1),
-      }).map((_, index) => {
-        const row = Math.floor(index / (maxColumn + 1))
-        const column = index % (maxColumn + 1)
-        const isActive = piece.cells.some(
-          ([pieceRow, pieceColumn]) =>
-            pieceRow === row && pieceColumn === column,
-        )
-
-        return (
-          <div
-            key={index}
-            className="rounded-md"
-            style={{
-              width: 24,
-              height: 24,
-              backgroundColor: isActive
-                ? piece.color
-                : 'transparent',
-            }}
-          />
-        )
-      })}
-    </div>
   )
 }
 
