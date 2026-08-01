@@ -16,6 +16,7 @@ import ClassDetails from '../pages/ClassDetails'
 import FlashcardSet from '../pages/FlashcardSet'
 import FlashcardQuiz from '../pages/FlashcardQuiz'
 import FlashcardReview from '../pages/FlashcardReview'
+import FlashcardGame from '../pages/FlashcardGame'
 
 function AppRoutes() {
   return (
@@ -47,7 +48,7 @@ function AppRoutes() {
       <Route path="/flashcards/:setId" element={<FlashcardSet />}/>
       <Route path="/flashcards/:setId/quiz" element={<FlashcardQuiz />}/>
       <Route path="/flashcards/:setId/review" element={<FlashcardReview />} />
-      
+      <Route path="/flashcards/:setId/game" element = {<FlashcardGame />} />
       </Route>
 
     </Routes>
