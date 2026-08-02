@@ -101,6 +101,26 @@ function Landing() {
               Start for free
             </Link>
           </div>
+        
+
+        {/* Mobile */}
+        <div className="flex items-center gap-3 md:hidden">
+          <ThemeSwitcher />
+
+          <Link
+            to="/login"
+            className="font-semibold"
+          >
+            Log in
+          </Link>
+
+          <Link
+            to="/register"
+            className="rounded-xl bg-(--color-primary) px-4 py-2 font-bold text-(--text-light)"
+          >
+            Sign up
+          </Link>
+        </div>
         </div>
       </header>
 
