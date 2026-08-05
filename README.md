@@ -69,13 +69,143 @@ StudyFlow is a full-stack web application designed to help university students o
 
 # System Architecture
 
-**Diagram (System Architecture)**
+```mermaid
+flowchart TB
+    Browser["Browser"]
+
+    subgraph App["StudyFlow — React + Vite"]
+        Routes["routes/\nAppRoutes, PrivateRoutes"]
+        Pages["pages/\nDashboard, Timetable, Coursework,\nFlashcards, Todo, Review, Classes..."]
+        Components["components/\nreusable UI (timetable, coursework,\nflashcards, todo, dashboard, review)"]
+        AuthCtx["context/\nAuthContext (session state)"]
+        Hooks["hooks/\nuseCoursework, useTimetable,\nuseCourseworkSchedule, useTodos,\nuseFlashcards, useClasses, useReview..."]
+        Utils["utils/\ncourseworkScheduler, schedulerScoring,\nschedulerCandidates, lectureSchedule,\ntimetable, datetime (pure logic)"]
+        Services["services/ + lib/\ncourseworkScheduleService,\ntimetableService, lectureService,\nsupabaseClient"]
+    end
+
+    subgraph Supabase["Supabase"]
+        Auth["Auth\n(email/password sessions)"]
+        DB[("PostgreSQL\nRow Level Security")]
+    end
+
+    Browser --> Routes
+    Routes --> Pages
+    Routes --> AuthCtx
+    Pages --> Components
+    Pages --> Hooks
+    AuthCtx --> Auth
+    Hooks --> Utils
+    Hooks --> Services
+    Services --> Auth
+    Services --> DB
+```
 
 ---
 
 # Database Design
 
-**Diagram (Entity Relationship Diagram)**
+```mermaid
+erDiagram
+    USERS ||--o{ CLASSES : owns
+    USERS ||--o{ ASSIGNMENTS : owns
+    USERS ||--o{ LECTURES : owns
+    USERS ||--o{ TIME_BLOCKS : owns
+    USERS ||--o{ FLASHCARD_SETS : owns
+    USERS ||--o{ FLASHCARDS : owns
+    USERS ||--o{ TODOS : owns
+
+    CLASSES ||--o{ ASSIGNMENTS : has
+    CLASSES ||--o{ LECTURES : has
+    CLASSES ||--o{ TIME_BLOCKS : has
+    CLASSES ||--o{ FLASHCARD_SETS : has
+    CLASSES ||--o{ FLASHCARDS : has
+    CLASSES ||--o{ TODOS : has
+
+    ASSIGNMENTS ||--o{ TIME_BLOCKS : "generates study sessions"
+    LECTURES ||--o{ TIME_BLOCKS : "scheduled as"
+    FLASHCARD_SETS ||--o{ FLASHCARDS : contains
+
+    CLASSES {
+        uuid id PK
+        uuid user_id FK
+        text name
+        text code
+        text lecturer
+        text color
+        numeric target_grade
+        numeric credits
+    }
+
+    ASSIGNMENTS {
+        uuid id PK
+        uuid user_id FK
+        uuid class_id FK
+        text title
+        text description
+        date due_date
+        text status
+        numeric hours
+        numeric grade
+    }
+
+    LECTURES {
+        uuid id PK
+        uuid user_id FK
+        uuid class_id FK
+        text title
+        text lecture_url
+        int week_number
+        int estimated_minutes
+        boolean completed
+        timestamp completed_at
+        timestamp created_at
+    }
+
+    TIME_BLOCKS {
+        uuid id PK
+        uuid user_id FK
+        uuid class_id FK
+        uuid coursework_id FK
+        uuid lecture_id FK
+        text title
+        date block_date
+        time start_time
+        time end_time
+        text block_type
+        boolean is_recurring
+        text recurrence_type
+        date recurrence_end_date
+        boolean auto_generated
+        boolean completed
+        timestamp created_at
+    }
+
+    FLASHCARD_SETS {
+        uuid id PK
+        uuid user_id FK
+        uuid class_id FK
+        text title
+    }
+
+    FLASHCARDS {
+        uuid id PK
+        uuid user_id FK
+        uuid set_id FK
+        uuid class_id FK
+        text front
+        text back
+    }
+
+    TODOS {
+        uuid id PK
+        uuid user_id FK
+        uuid class_id FK
+        text title
+        date due_date
+        boolean completed
+        timestamp completed_at
+    }
+```
 
 ---
 
@@ -94,7 +224,41 @@ The scheduler works by:
 
 The scheduling engine is completely independent from the user interface, making it easy to maintain.
 
-**Diagram (Scheduling Flowchart)**
+```mermaid
+flowchart TD
+    Start(["Rebuild triggered\n(coursework created/edited/deleted)"]) --> Filter
+
+    Filter["Filter to active assignments:\nnot completed, has due_date ≥ today,\nestimated hours > 0"] --> Remaining
+
+    Remaining["For each assignment, compute\nremaining minutes =\nestimated minutes − already manually-scheduled minutes"] --> KeepFixed
+
+    KeepFixed["Keep all fixed blocks\n(lectures, manual study, personal events,\nmanually-added coursework blocks)\nDrop only old auto-generated coursework blocks"] --> Loop
+
+    Loop{"Any assignment left with\nremaining minutes > 0\nand not marked 'blocked'?"}
+
+    Loop -- No --> Done(["Return generated blocks +\nany unscheduled assignments"])
+
+    Loop -- Yes --> Sort["Sort candidates by priority:\nurgency (days until due)\n+ workload (remaining minutes)"]
+
+    Sort --> Pick["Pick the highest-priority assignment"]
+
+    Pick --> Find["Find best candidate time slot:\nscan open slots across the planning window,\nskipping lectures/existing blocks,\nlunch/dinner windows, and slots\nshorter than the minimum session length"]
+
+    Find --> Score["Score each candidate slot:\n+ urgency, + earlier-date bonus,\n+ daytime bonus, + remaining-work bonus,\n− deadline-risk penalty,\n− same-assignment-same-day penalty,\n− daily-load penalty"]
+
+    Score --> Best{"Candidate slot found?"}
+
+    Best -- No --> Block["Mark assignment as blocked\n(no room left for it this pass)"]
+    Block --> Loop
+
+    Best -- Yes --> Create["Create a generated study block\n(block_type = 'Coursework', auto_generated = true)\nclamped to min/preferred/max session length"]
+
+    Create --> Reduce["Reduce assignment's\nremaining minutes by session duration"]
+
+    Reduce --> Loop
+
+    Done --> Persist["Persist:\ndelete old auto-generated coursework blocks\n→ insert newly generated blocks"]
+```
 
 ---
 
@@ -120,7 +284,30 @@ The application follows a layered architecture:
 * **Services** – Communication with Supabase.
 * **Utilities** – Pure helper functions and scheduling logic.
 
-**Diagram (Application Structure)**
+```mermaid
+flowchart LR
+    subgraph src["src/"]
+        direction TB
+        pages["pages/\nhigh-level views, one per route"]
+        components["components/\nclasses, coursework, dashboard,\nflashcards, layout, review,\ntimetable, todo"]
+        routes["routes/\nAppRoutes, PrivateRoutes"]
+        context["context/\nAuthContext"]
+        hooks["hooks/\nstate + business logic per feature"]
+        services["services/\nSupabase reads/writes\n(time_blocks, etc.)"]
+        lib["lib/\nsupabaseClient"]
+        utils["utils/\npure helpers + scheduling engine\n(datetime, timetable, courseworkScheduler,\nschedulerScoring, schedulerCandidates,\nlectureSchedule, quizUtils, dashboardUtils)"]
+        config["config/\nform field definitions per entity"]
+    end
+
+    routes --> pages
+    context --> routes
+    pages --> components
+    pages --> hooks
+    components --> config
+    hooks --> services
+    hooks --> utils
+    services --> lib
+```
 
 ---
 
