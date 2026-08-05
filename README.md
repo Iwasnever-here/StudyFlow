@@ -104,6 +104,7 @@ flowchart TB
 
 # Database Design
 
+
 ```mermaid
 erDiagram
     USERS ||--o{ CLASSES : owns
@@ -121,91 +122,22 @@ erDiagram
     CLASSES ||--o{ FLASHCARDS : has
     CLASSES ||--o{ TODOS : has
 
-    ASSIGNMENTS ||--o{ TIME_BLOCKS : "generates study sessions"
+    ASSIGNMENTS ||--o{ TIME_BLOCKS : generates
     LECTURES ||--o{ TIME_BLOCKS : "scheduled as"
     FLASHCARD_SETS ||--o{ FLASHCARDS : contains
-
-    CLASSES {
-        uuid id PK
-        uuid user_id FK
-        text name
-        text code
-        text lecturer
-        text color
-        numeric target_grade
-        numeric credits
-    }
-
-    ASSIGNMENTS {
-        uuid id PK
-        uuid user_id FK
-        uuid class_id FK
-        text title
-        text description
-        date due_date
-        text status
-        numeric hours
-        numeric grade
-    }
-
-    LECTURES {
-        uuid id PK
-        uuid user_id FK
-        uuid class_id FK
-        text title
-        text lecture_url
-        int week_number
-        int estimated_minutes
-        boolean completed
-        timestamp completed_at
-        timestamp created_at
-    }
-
-    TIME_BLOCKS {
-        uuid id PK
-        uuid user_id FK
-        uuid class_id FK
-        uuid coursework_id FK
-        uuid lecture_id FK
-        text title
-        date block_date
-        time start_time
-        time end_time
-        text block_type
-        boolean is_recurring
-        text recurrence_type
-        date recurrence_end_date
-        boolean auto_generated
-        boolean completed
-        timestamp created_at
-    }
-
-    FLASHCARD_SETS {
-        uuid id PK
-        uuid user_id FK
-        uuid class_id FK
-        text title
-    }
-
-    FLASHCARDS {
-        uuid id PK
-        uuid user_id FK
-        uuid set_id FK
-        uuid class_id FK
-        text front
-        text back
-    }
-
-    TODOS {
-        uuid id PK
-        uuid user_id FK
-        uuid class_id FK
-        text title
-        date due_date
-        boolean completed
-        timestamp completed_at
-    }
 ```
+
+**Column detail:**
+
+| Table | Columns |
+|---|---|
+| `classes` | `id` PK, `user_id` FK, `name`, `code`, `lecturer`, `color`, `target_grade`, `credits` |
+| `assignments` | `id` PK, `user_id` FK, `class_id` FK, `title`, `description`, `due_date`, `status`, `hours`, `grade` |
+| `lectures` | `id` PK, `user_id` FK, `class_id` FK, `title`, `lecture_url`, `week_number`, `estimated_minutes`, `completed`, `completed_at`, `created_at` |
+| `time_blocks` | `id` PK, `user_id` FK, `class_id` FK, `coursework_id` FK, `lecture_id` FK, `title`, `block_date`, `start_time`, `end_time`, `block_type`, `is_recurring`, `recurrence_type`, `recurrence_end_date`, `auto_generated`, `completed`, `created_at` |
+| `flashcard_sets` | `id` PK, `user_id` FK, `class_id` FK, `title` |
+| `flashcards` | `id` PK, `user_id` FK, `set_id` FK, `class_id` FK, `front`, `back` |
+| `todos` | `id` PK, `user_id` FK, `class_id` FK, `title`, `due_date`, `completed`, `completed_at` |
 
 ---
 
